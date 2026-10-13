@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExtensionInfo
+    displayName="@string/extension_name"
+    icon="@drawable/ic_intervalsync"
+    id="intervalsync"
+    scansDevices="false">
+    <DataType
+        description="@string/wbal_kj_description"
+        displayName="@string/wbal_kj"
+        graphical="false"
+        icon="@drawable/ic_intervalsync"
+        typeId="wbal-kj" />
+    <DataType
+        description="@string/wbal_pct_description"
+        displayName="@string/wbal_pct"
+        graphical="false"
+        icon="@drawable/ic_intervalsync"
+        typeId="wbal-pct" />
+    <DataType
+        description="@string/best_5min_description"
+        displayName="@string/best_5min"
+        graphical="false"
+        icon="@drawable/ic_intervalsync"
+        typeId="best-5min" />
+    <DataType
+        description="@string/best_20min_description"
+        displayName="@string/best_20min"
+        graphical="false"
+        icon="@drawable/ic_intervalsync"
+        typeId="best-20min" />
+</ExtensionInfo>

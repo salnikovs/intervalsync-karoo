@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Intervalsync</string>
+    <string name="extension_name">Intervalsync</string>
+
+    <string name="wbal_kj">W′ Balance</string>
+    <string name="wbal_kj_description">Work capacity left above critical power, in kJ</string>
+    <string name="wbal_pct">W′ Balance %</string>
+    <string name="wbal_pct_description">Work capacity left above critical power, as a share of W′</string>
+    <string name="best_5min">Best 5 min</string>
+    <string name="best_5min_description">Best 5-minute average power this ride</string>
+    <string name="best_20min">Best 20 min</string>
+    <string name="best_20min_description">Best 20-minute average power this ride</string>
+
+    <string name="settings_title">Intervalsync</string>
+    <string name="settings_intro">Critical power and W′ drive the W′ Balance fields. Leave a value empty to use the default.</string>
+    <string name="settings_cp">Critical power (W)</string>
+    <string name="settings_cp_default_ftp">Default: Karoo FTP, %1$d W</string>
+    <string name="settings_cp_default_none">Default: Karoo FTP (not set)</string>
+    <string name="settings_w_prime">W′ (kJ)</string>
+    <string name="settings_w_prime_default">Default: %1$d kJ</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_saved">Saved</string>
+</resources>

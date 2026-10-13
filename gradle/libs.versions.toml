@@ -1,0 +1,31 @@
+[versions]
+agp = "8.6.1"
+kotlin = "2.0.21"
+
+karooExt = "1.1.9"
+androidxCore = "1.13.1"
+androidxActivity = "1.9.3"
+composeBom = "2024.10.00"
+coroutines = "1.8.1"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+[libraries]
+hammerhead-karoo-ext = { group = "io.hammerhead", name = "karoo-ext", version.ref = "karooExt" }
+
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+
+# compose
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-material = { module = "androidx.compose.material3:material3" }
+
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+# karoo-ext's inline APIs reference these, but it doesn't export them
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.6.3" }
+timber = { module = "com.jakewharton.timber:timber", version = "5.0.1" }
