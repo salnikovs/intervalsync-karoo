@@ -7,15 +7,21 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-/** Rider's own CP and W′; null means "use the default". */
+/**
+ * Rider's CP and W′: typed in on the Karoo ([cpW], [wPrimeJ]) or synced from
+ * Intervalsync ([syncedCpW], [syncedWPrimeJ]). Null means "not set".
+ */
 data class AthleteSettings(
     val cpW: Int? = null,
     val wPrimeJ: Int? = null,
+    val syncedCpW: Int? = null,
+    val syncedWPrimeJ: Int? = null,
 ) {
-    /** CP falls back to the Karoo profile's FTP, W′ to [AthleteParams.DEFAULT_W_PRIME_J]. */
+    /** Typed-in values win, then Intervalsync's, then the Karoo profile's FTP and [AthleteParams.DEFAULT_W_PRIME_J]. */
     fun resolve(karooFtpW: Int?): AthleteParams? {
-        val cp = cpW ?: karooFtpW?.takeIf { it > 0 } ?: return null
-        return AthleteParams(cp.toDouble(), wPrimeJ?.toDouble() ?: AthleteParams.DEFAULT_W_PRIME_J)
+        val cp = cpW ?: syncedCpW ?: karooFtpW?.takeIf { it > 0 } ?: return null
+        val wPrime = wPrimeJ ?: syncedWPrimeJ
+        return AthleteParams(cp.toDouble(), wPrime?.toDouble() ?: AthleteParams.DEFAULT_W_PRIME_J)
     }
 }
 
@@ -23,14 +29,25 @@ class SettingsStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("athlete", Context.MODE_PRIVATE)
 
     fun read(): AthleteSettings = AthleteSettings(
-        cpW = prefs.getInt(KEY_CP_W, 0).takeIf { it > 0 },
-        wPrimeJ = prefs.getInt(KEY_W_PRIME_J, 0).takeIf { it > 0 },
+        cpW = positive(KEY_CP_W),
+        wPrimeJ = positive(KEY_W_PRIME_J),
+        syncedCpW = positive(KEY_SYNCED_CP_W),
+        syncedWPrimeJ = positive(KEY_SYNCED_W_PRIME_J),
     )
 
-    fun write(settings: AthleteSettings) {
+    /** Save the values typed in on the Karoo. */
+    fun write(cpW: Int?, wPrimeJ: Int?) {
         prefs.edit()
-            .putInt(KEY_CP_W, settings.cpW ?: 0)
-            .putInt(KEY_W_PRIME_J, settings.wPrimeJ ?: 0)
+            .putInt(KEY_CP_W, cpW ?: 0)
+            .putInt(KEY_W_PRIME_J, wPrimeJ ?: 0)
+            .apply()
+    }
+
+    /** Save the values pulled from Intervalsync. */
+    fun writeSynced(cpW: Int?, wPrimeJ: Int?) {
+        prefs.edit()
+            .putInt(KEY_SYNCED_CP_W, cpW ?: 0)
+            .putInt(KEY_SYNCED_W_PRIME_J, wPrimeJ ?: 0)
             .apply()
     }
 
@@ -42,8 +59,12 @@ class SettingsStore(context: Context) {
         awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
+    private fun positive(key: String): Int? = prefs.getInt(key, 0).takeIf { it > 0 }
+
     companion object {
         private const val KEY_CP_W = "cp_w"
         private const val KEY_W_PRIME_J = "w_prime_j"
+        private const val KEY_SYNCED_CP_W = "synced_cp_w"
+        private const val KEY_SYNCED_W_PRIME_J = "synced_w_prime_j"
     }
 }

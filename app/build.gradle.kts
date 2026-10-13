@@ -14,6 +14,10 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
+
+        // -Pintervalsync.apiBaseUrl=http://<host>:8787 points a build at tools/mock_server.py
+        val apiBaseUrl = providers.gradleProperty("intervalsync.apiBaseUrl").getOrElse("https://intervalsync.icu")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildTypes {
@@ -31,6 +35,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

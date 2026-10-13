@@ -1,0 +1,112 @@
+"""Local stand-in for intervalsync.icu's device API (docs/device-api.md).
+
+    python3 tools/mock_server.py                   # approve by hand, see below
+    python3 tools/mock_server.py --auto-approve 3  # approve after the 3rd poll
+
+Build the app against it with -Pintervalsync.apiBaseUrl=http://<this machine's IP>:8787.
+To approve a pairing by hand, as the website would:
+
+    curl -X POST localhost:8787/api/devices -d '{"code": "483920"}'
+
+Everything is in memory and there is no sign-in: never expose this beyond your own network.
+"""
+
+import argparse
+import json
+import secrets
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+ATHLETE = {
+    "athlete_name": "Test Rider",
+    "cp_w": 250,
+    "w_prime_j": 20000,
+    "ftp_w": 260,
+    "weight_kg": 75.0,
+    "max_hr": 185,
+    "resting_hr": 50,
+}
+EXPIRES_IN = 600
+
+pairings = {}  # pairing_id -> {code, created, approved, polls}
+tokens = set()
+auto_approve = 0
+
+
+class Handler(BaseHTTPRequestHandler):
+    def reply(self, status, body=None):
+        data = json.dumps(body).encode() if body is not None else b""
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def body(self):
+        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            return json.loads(self.rfile.read(length) or b"{}")
+        except json.JSONDecodeError:
+            return {}
+
+    def token(self):
+        value = self.headers.get("Authorization", "").removeprefix("Bearer ")
+        return value if value in tokens else None
+
+    def do_POST(self):
+        body = self.body()
+        if self.path == "/api/device/pairings":
+            pairing_id = secrets.token_urlsafe(32)
+            code = f"{secrets.randbelow(10**6):06d}"
+            pairings[pairing_id] = {"code": code, "created": time.time(), "approved": False, "polls": 0}
+            print(f"  pairing code {code}")
+            self.reply(201, {"pairing_id": pairing_id, "code": code, "verification_url": "intervalsync.icu/#devices", "expires_in": EXPIRES_IN, "interval": 5})
+        elif self.path == "/api/device/pairings/token":
+            pairing = pairings.get(body.get("pairing_id"))
+            if pairing is None:
+                return self.reply(404, {"error": "unknown pairing"})
+            if time.time() - pairing["created"] > EXPIRES_IN:
+                del pairings[body["pairing_id"]]
+                return self.reply(410, {"error": "expired"})
+            pairing["polls"] += 1
+            if auto_approve and pairing["polls"] >= auto_approve:
+                pairing["approved"] = True
+            if not pairing["approved"]:
+                return self.reply(200, {"status": "pending"})
+            del pairings[body["pairing_id"]]
+            token = secrets.token_urlsafe(32)
+            tokens.add(token)
+            self.reply(200, {"status": "approved", "token": token, "athlete_name": ATHLETE["athlete_name"]})
+        elif self.path == "/api/devices":
+            match = next((p for p in pairings.values() if p["code"] == str(body.get("code"))), None)
+            if match is None:
+                return self.reply(404, {"error": "unknown code"})
+            match["approved"] = True
+            self.reply(200, {"status": "approved"})
+        else:
+            self.reply(404, {"error": "not found"})
+
+    def do_GET(self):
+        if self.path == "/api/device/athlete":
+            if not self.token():
+                return self.reply(401, {"error": "unauthorized"})
+            self.reply(200, ATHLETE)
+        else:
+            self.reply(404, {"error": "not found"})
+
+    def do_DELETE(self):
+        if self.path == "/api/device":
+            tokens.discard(self.token())
+            self.reply(204)
+        else:
+            self.reply(404, {"error": "not found"})
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--port", type=int, default=8787)
+    parser.add_argument("--auto-approve", type=int, default=0, metavar="N", help="approve each pairing after its Nth poll")
+    args = parser.parse_args()
+    auto_approve = args.auto_approve
+    print(f"Mock Intervalsync device API on port {args.port}")
+    ThreadingHTTPServer(("0.0.0.0", args.port), Handler).serve_forever()

@@ -15,7 +15,9 @@ Scaffold with the first in-ride data fields:
 
 CP defaults to the FTP in the Karoo profile and W′ to 20 kJ; both can be set in the app's screen on the Karoo until pairing with Intervalsync replaces them.
 
-Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, ride contribution, the end-of-ride summary and send to Intervalsync, FIT developer fields, pairing.
+Pairing with Intervalsync is built on the Karoo side: the app shows a code, receives a device token, and then takes CP and W′ from Intervals.icu. intervalsync.icu doesn't have the endpoints yet, so it only works against `tools/mock_server.py`; the contract is in [docs/device-api.md](docs/device-api.md).
+
+Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, ride contribution, VO2max, the end-of-ride summary and send to Intervalsync, FIT developer fields.
 
 ## Roadmap
 
@@ -25,6 +27,8 @@ Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, 
 
 - `core/` — pure Kotlin metric math, no Android. Unit-tested; this is where every formula lives.
 - `app/` — the Karoo extension: samples Karoo's power stream at 1 Hz, feeds `core`, and serves the data fields.
+- `validation/` — Python reference implementations of the spec's metrics, run over real rides from Intervals.icu ([validation/README.md](validation/README.md)).
+- `tools/mock_server.py` — local stand-in for the Intervalsync device API.
 
 ## Build
 

@@ -9,3 +9,8 @@ build/
 .externalNativeBuild
 .cxx
 /app/release
+
+# validation: API key and downloaded ride data stay local
+.env
+/validation/data/
+__pycache__/
