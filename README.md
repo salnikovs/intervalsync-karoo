@@ -24,23 +24,25 @@ Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, 
 
 ## Build
 
-Needs JDK 17 and the Android SDK (Android Studio brings both).
+Needs JDK 17 and the Android SDK (Android Studio brings the SDK). The build always runs on Java 17, whatever the default `java` is (`gradle/gradle-daemon-jvm.properties`).
 
-karoo-ext is served from GitHub Packages, which needs a token even for public packages. Put a [personal access token](https://github.com/settings/tokens) with `read:packages` in `~/.gradle/gradle.properties`:
-
-```properties
-gpr.user=<github username>
-gpr.key=<token>
-```
-
-Then:
+The tests need nothing else:
 
 ```bash
 ./gradlew :core:test
 ```
 
+karoo-ext is served from GitHub Packages, which needs a token with `read:packages` even for public packages. With the `gh` CLI, add the scope once (`gh auth refresh -s read:packages`) and pass the token per build:
+
 ```bash
-./gradlew :app:installDebug
+GITHUB_ACTOR=<github username> GITHUB_TOKEN="$(gh auth token)" ./gradlew :app:installDebug
+```
+
+For builds from Android Studio, put a [personal access token](https://github.com/settings/tokens) in `~/.gradle/gradle.properties` instead:
+
+```properties
+gpr.user=<github username>
+gpr.key=<token>
 ```
 
 CI runs the tests and builds a debug APK on every push; the APK is attached to the workflow run.
