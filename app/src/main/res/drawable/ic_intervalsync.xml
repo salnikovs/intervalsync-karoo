@@ -1,10 +1,14 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <!-- Interval blocks: easy, hard, easy, hard -->
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M3,14h3v6h-3zM8,6h3v14h-3zM13,14h3v6h-3zM18,4h3v16h-3z" />
+    android:viewportWidth="384"
+    android:viewportHeight="384">
+    <!-- The three bars of the Intervalsync logo, single colour for Karoo's field and extension icons -->
+    <group
+        android:translateX="-64"
+        android:translateY="-64">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M128,272h24a32,32 0,0 1,32 32v80a32,32 0,0 1,-32 32h-24a32,32 0,0 1,-32 -32v-80a32,32 0,0 1,32 -32zM248,176h24a32,32 0,0 1,32 32v176a32,32 0,0 1,-32 32h-24a32,32 0,0 1,-32 -32v-176a32,32 0,0 1,32 -32zM368,96h24a32,32 0,0 1,32 32v256a32,32 0,0 1,-32 32h-24a32,32 0,0 1,-32 -32v-256a32,32 0,0 1,32 -32z" />
+    </group>
 </vector>

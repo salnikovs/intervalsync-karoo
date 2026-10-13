@@ -17,6 +17,10 @@ CP defaults to the FTP in the Karoo profile and W′ to 20 kJ; both can be set i
 
 Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, ride contribution, the end-of-ride summary and send to Intervalsync, FIT developer fields, pairing.
 
+## Roadmap
+
+- **Intervalsync as a Karoo connected account.** Listed under Connected Accounts next to Xert, Intervals.icu and SRAM, so riders connect it and get ride upload there like any other account. karoo-ext has no API for this; that list is Hammerhead's own, so it needs a partner integration with Hammerhead. Until then the extension's own pairing and end-of-ride send stand in for it.
+
 ## Layout
 
 - `core/` — pure Kotlin metric math, no Android. Unit-tested; this is where every formula lives.
