@@ -154,7 +154,7 @@ class PastRidesActivity : ComponentActivity() {
                 return@launch
             }
             val athlete = settings.read()
-            val ftp = athlete.syncedFtpW ?: karooFtp
+            val ftp = athlete.resolveFtp(karooFtp)
             val snapshot = withContext(Dispatchers.Default) {
                 RideTracker.summarize(power, athlete.resolve(karooFtp), ftp?.toDouble())
             }

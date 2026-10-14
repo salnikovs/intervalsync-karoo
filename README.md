@@ -14,7 +14,7 @@ Scaffold with the first in-ride data fields:
 | Best 5 min | `best-5min` | Best 300 s average power this ride |
 | Best 20 min | `best-20min` | Best 1,200 s average power this ride |
 
-CP defaults to the FTP in the Karoo profile and W′ to 20 kJ; both can be set in the app's screen on the Karoo until pairing with Intervalsync replaces them.
+The app has two tabs. **Training** shows the rider's training context from their Intervalsync account, training hours per week as bars with critical power and W′ as lines over the last 6 or 12 weeks, past rides and the last ride's summary. **Settings** holds the Intervalsync connection and CP, W′ and FTP: a value typed there wins, then the one synced from Intervals.icu, then the Karoo profile's FTP (for CP and FTP) or 20 kJ (for W′).
 
 Pairing with Intervalsync is built on the Karoo side: the app shows a code, receives a device token, and then takes CP and W′ from Intervals.icu. intervalsync.icu doesn't have the endpoints yet, so it only works against `tools/mock_server.py`; the contract is in [docs/device-api.md](docs/device-api.md).
 

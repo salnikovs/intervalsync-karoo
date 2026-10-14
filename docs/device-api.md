@@ -89,6 +89,43 @@ The Karoo can't read rides already recorded on it, so it fetches them back from 
 - `404` — not one of this rider's rides, or it has no power.
 - `413` — longer than 6 hours; the response would be too large for Karoo's HTTP channel.
 
+## Training context
+
+### `GET /api/device/context`
+
+`Authorization: Bearer <device token>`. The training context the rider saved to their Intervalsync account, in their own words. It reads nothing from Intervals.icu. A section the rider hasn't saved is omitted or `null`.
+
+```json
+{
+  "goal": "...",
+  "events": "...",
+  "constraints": "...",
+  "preferences": "...",
+  "notes": "..."
+}
+```
+
+The device calls this when the rider opens the app, at most once every 6 hours.
+
+## Trends
+
+### `GET /api/device/trends`
+
+`Authorization: Bearer <device token>`. One entry per week for the last 12 weeks, oldest first, ending with the current (partial) week. Weeks start on Monday in the athlete's own timezone. A week with no training is included with `hours: 0`.
+
+```json
+{
+  "weeks": [
+    {"week_start": "2026-07-27", "hours": 7.5, "cp_w": 231, "w_prime_j": 20900}
+  ]
+}
+```
+
+- `hours` — training time that week, counting every activity type, not only rides.
+- `cp_w`, `w_prime_j` — the rider's modelled critical power and W′ as of the end of that week (as of today for the current week); `null` where there isn't enough data to model them.
+
+The device shows the last 6 or 12 of these. It calls this when the rider opens the app, at most once every 6 hours.
+
 ## Ride summary (not built on either side yet)
 
 ### `POST /api/device/rides`

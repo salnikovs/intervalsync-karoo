@@ -12,7 +12,9 @@ Everything is in memory and there is no sign-in: never expose this beyond your o
 """
 
 import argparse
+import datetime
 import json
+import math
 import secrets
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -109,6 +111,28 @@ class Handler(BaseHTTPRequestHandler):
         parts = self.path.split("/")
         if self.path == "/api/device/athlete":
             self.reply(200, ATHLETE)
+        elif self.path == "/api/device/context":
+            self.reply(200, {
+                "goal": "Ride a sub-5-hour century on 14 March.",
+                "events": "14 March: spring century (A). 2 May: club hill climb (B).",
+                "constraints": "8 hours a week. Indoor trainer on weekdays.",
+                "preferences": None,
+                "notes": "",
+            })
+        elif self.path == "/api/device/trends":
+            today = datetime.date.today()
+            monday = today - datetime.timedelta(days=today.weekday())
+            hours = [6.5, 8.0, 7.25, 0.0, 4.5, 7.5, 9.0, 8.25, 5.5, 7.0, 8.5, 2.0]
+            weeks = [
+                {
+                    "week_start": str(monday - datetime.timedelta(weeks=11 - i)),
+                    "hours": h,
+                    "cp_w": None if i < 2 else round(236 + i + 2 * math.sin(i)),
+                    "w_prime_j": None if i < 2 else round(19800 + 150 * i - 500 * math.sin(i / 2)),
+                }
+                for i, h in enumerate(hours)
+            ]
+            self.reply(200, {"weeks": weeks})
         elif self.path == "/api/device/rides":
             rides = [{"id": i, "name": r["name"], "started_at_ms": r["started_at_ms"], "duration_s": len(r["watts"])} for i, r in RIDES.items()]
             self.reply(200, {"rides": rides})

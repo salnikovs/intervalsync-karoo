@@ -65,10 +65,10 @@ class RideEngine(
             val karooFtp = karooSystem.consumerFlow<UserProfile>()
                 .map<UserProfile, Int?> { it.ftp }
                 .onStart { emit(null) }
-            combine(settings.flow(), karooFtp) { athlete, ftp -> Pair(athlete.resolve(ftp), ftp) }.collect { (athlete, ftp) ->
+            combine(settings.flow(), karooFtp) { athlete, ftp -> Pair(athlete.resolve(ftp), athlete.resolveFtp(ftp)) }.collect { (athlete, ftp) ->
                 Timber.d("Athlete params now $athlete, FTP $ftp")
                 params = athlete
-                ftpW = ftp?.takeIf { it > 0 }?.toDouble()
+                ftpW = ftp?.toDouble()
             }
         }
         scope.launch { sample() }

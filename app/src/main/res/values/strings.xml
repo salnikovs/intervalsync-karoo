@@ -25,6 +25,22 @@
     <string name="summary_zones">Where the stress came from</string>
     <string name="summary_open">Last ride summary</string>
     <string name="past_rides_open">Past rides</string>
+
+    <string name="context_title">Training context</string>
+    <string name="context_empty">Nothing saved yet. Add your goal and events at intervalsync.icu and they show up here.</string>
+    <string name="context_goal">Goal</string>
+    <string name="context_events">Events</string>
+    <string name="context_constraints">Constraints</string>
+    <string name="context_preferences">Preferences</string>
+    <string name="context_notes">Notes</string>
+    <string name="trends_weeks">%1$d weeks</string>
+    <string name="consistency_average">%1$s h a week</string>
+    <string name="consistency_this_week">this week</string>
+    <string name="trend_from">from %1$s</string>
+    <string name="consistency_title">Consistency</string>
+    <string name="trend_cp_title">Critical power</string>
+    <string name="trend_w_prime_title">W′</string>
+    <string name="kilojoules">%1$s kJ</string>
     <string name="past_rides_title">Past rides</string>
     <string name="past_rides_loading">Loading from Intervals.icu…</string>
     <string name="past_rides_failed">Couldn\'t load rides from Intervalsync.</string>
@@ -45,7 +61,6 @@
     <string name="account_failed_connection">No connection to Intervalsync.</string>
 
     <string name="settings_title">Intervalsync</string>
-    <string name="settings_intro">Critical power and W′ drive the W′ Balance fields. Leave a value empty to use the default.</string>
 
     <string name="account_intro">Connect to Intervalsync to use your critical power and W′ from Intervals.icu.</string>
     <string name="account_connect">Connect to Intervalsync</string>
@@ -57,10 +72,17 @@
     <string name="account_connected_as">Connected to Intervalsync as %1$s</string>
     <string name="account_sync">Sync now</string>
     <string name="account_disconnect">Disconnect</string>
+    <string name="settings_section">Settings</string>
+    <string name="tab_training">Training</string>
+    <string name="training_not_connected">Connect to Intervalsync on the Settings tab to see your training context, consistency and past rides here.</string>
+    <string name="settings_intro">Critical power and W′ drive the W′ Balance fields; FTP sets the power zones. Leave a value empty to use the default.</string>
+    <string name="settings_default_synced">Default: Intervals.icu, %1$d W</string>
+    <string name="settings_cp_default_ftp">Default: your FTP, %1$d W</string>
+    <string name="settings_cp_default_none">Default: your FTP (not set)</string>
+    <string name="settings_ftp">FTP (W)</string>
+    <string name="settings_ftp_default_karoo">Default: Karoo profile, %1$d W</string>
+    <string name="settings_ftp_default_none">Default: Karoo profile (not set)</string>
     <string name="settings_cp">Critical power (W)</string>
-    <string name="settings_cp_default_ftp">Default: Karoo FTP, %1$d W</string>
-    <string name="settings_cp_default_none">Default: Karoo FTP (not set)</string>
-    <string name="settings_cp_default_synced">Default: Intervals.icu, %1$d W</string>
     <string name="settings_w_prime">W′ (kJ)</string>
     <string name="settings_w_prime_default">Default: %1$s kJ</string>
     <string name="settings_w_prime_default_synced">Default: Intervals.icu, %1$s kJ</string>

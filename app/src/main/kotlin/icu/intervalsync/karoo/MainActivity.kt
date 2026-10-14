@@ -18,15 +18,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,6 +40,8 @@ import androidx.lifecycle.lifecycleScope
 import icu.intervalsync.karoo.account.AccountController
 import icu.intervalsync.karoo.account.AccountState
 import icu.intervalsync.karoo.account.AccountStore
+import icu.intervalsync.karoo.account.TrainingContextSection
+import icu.intervalsync.karoo.account.TrendsSection
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.core.AthleteParams
 import icu.intervalsync.karoo.summary.PastRidesActivity
@@ -46,6 +52,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+
+private val TABS = listOf(R.string.tab_training, R.string.settings_section)
 
 class MainActivity : ComponentActivity() {
     private val karooSystem by lazy { KarooSystemService(this) }
@@ -60,25 +68,49 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall)
-                        AccountSection(account) {
-                            startActivity(Intent(this@MainActivity, PastRidesActivity::class.java))
+                    var tab by rememberSaveable { mutableIntStateOf(0) }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        TabRow(selectedTabIndex = tab) {
+                            TABS.forEachIndexed { index, title ->
+                                Tab(selected = tab == index, onClick = { tab = index }, text = { Text(stringResource(title)) })
+                            }
                         }
-                        HorizontalDivider()
-                        AthleteSection(settings, karooFtp)
-                        HorizontalDivider()
-                        OutlinedButton(
-                            onClick = { startActivity(Intent(this@MainActivity, SummaryActivity::class.java)) },
-                            modifier = Modifier.fillMaxWidth(),
+                        // Each tab keeps its own scroll position
+                        val scroll = if (tab == 0) rememberScrollState() else rememberScrollState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scroll)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text(stringResource(R.string.summary_open))
+                            if (tab == 0) {
+                                val accountState by account.state.collectAsState()
+                                if (accountState !is AccountState.Paired) {
+                                    Text(stringResource(R.string.training_not_connected), style = MaterialTheme.typography.bodyMedium)
+                                }
+                                TrainingContextSection(account)
+                                TrendsSection(account, settings)
+                                HorizontalDivider()
+                                if (accountState is AccountState.Paired) {
+                                    Button(
+                                        onClick = { startActivity(Intent(this@MainActivity, PastRidesActivity::class.java)) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(stringResource(R.string.past_rides_open))
+                                    }
+                                }
+                                OutlinedButton(
+                                    onClick = { startActivity(Intent(this@MainActivity, SummaryActivity::class.java)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(stringResource(R.string.summary_open))
+                                }
+                            } else {
+                                AccountSection(account)
+                                HorizontalDivider()
+                                SettingsSection(settings, karooFtp)
+                            }
                         }
                     }
                 }
@@ -105,7 +137,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AccountSection(account: AccountController, onOpenPastRides: () -> Unit) {
+fun AccountSection(account: AccountController) {
     val state by account.state.collectAsState()
     val scope = rememberCoroutineScope()
 
@@ -141,9 +173,6 @@ fun AccountSection(account: AccountController, onOpenPastRides: () -> Unit) {
                 current.athleteName?.let { stringResource(R.string.account_connected_as, it) } ?: stringResource(R.string.account_connected),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Button(onClick = onOpenPastRides, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.past_rides_open))
-            }
             OutlinedButton(onClick = { scope.launch { account.syncAthlete() } }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.account_sync))
             }
@@ -155,35 +184,33 @@ fun AccountSection(account: AccountController, onOpenPastRides: () -> Unit) {
 }
 
 @Composable
-fun AthleteSection(settings: SettingsStore, karooFtp: StateFlow<Int?>) {
+fun SettingsSection(settings: SettingsStore, karooFtp: StateFlow<Int?>) {
     val initial = remember { settings.read() }
     val stored by remember { settings.flow() }.collectAsState(initial)
     var cp by remember { mutableStateOf(initial.cpW?.toString().orEmpty()) }
     var wPrimeKj by remember { mutableStateOf(initial.wPrimeJ?.let { formatKj(it) }.orEmpty()) }
+    var ftp by remember { mutableStateOf(initial.ftpW?.toString().orEmpty()) }
     var saved by remember { mutableStateOf(false) }
-    val ftp by karooFtp.collectAsState()
+    val profileFtp by karooFtp.collectAsState()
 
     Text(stringResource(R.string.settings_intro), style = MaterialTheme.typography.bodyMedium)
-    OutlinedTextField(
+    WattsField(
         value = cp,
         onValueChange = {
-            cp = it.filter(Char::isDigit)
+            cp = it
             saved = false
         },
-        label = { Text(stringResource(R.string.settings_cp)) },
-        supportingText = {
+        label = stringResource(R.string.settings_cp),
+        default = run {
             val syncedCp = stored.syncedCpW
-            Text(
-                when {
-                    syncedCp != null -> stringResource(R.string.settings_cp_default_synced, syncedCp)
-                    ftp != null -> stringResource(R.string.settings_cp_default_ftp, ftp ?: 0)
-                    else -> stringResource(R.string.settings_cp_default_none)
-                },
-            )
+            // Without a CP of its own, the app uses whatever FTP is in effect
+            val fallback = stored.copy(ftpW = ftp.toIntOrNull()?.takeIf { it > 0 }).resolveFtp(profileFtp)
+            when {
+                syncedCp != null -> stringResource(R.string.settings_default_synced, syncedCp)
+                fallback != null -> stringResource(R.string.settings_cp_default_ftp, fallback)
+                else -> stringResource(R.string.settings_cp_default_none)
+            }
         },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
     )
     OutlinedTextField(
         value = wPrimeKj,
@@ -206,11 +233,29 @@ fun AthleteSection(settings: SettingsStore, karooFtp: StateFlow<Int?>) {
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
+    WattsField(
+        value = ftp,
+        onValueChange = {
+            ftp = it
+            saved = false
+        },
+        label = stringResource(R.string.settings_ftp),
+        default = run {
+            val syncedFtp = stored.syncedFtpW
+            val karoo = profileFtp
+            when {
+                syncedFtp != null -> stringResource(R.string.settings_default_synced, syncedFtp)
+                karoo != null -> stringResource(R.string.settings_ftp_default_karoo, karoo)
+                else -> stringResource(R.string.settings_ftp_default_none)
+            }
+        },
+    )
     Button(
         onClick = {
             settings.write(
                 cpW = cp.toIntOrNull()?.takeIf { it > 0 },
                 wPrimeJ = wPrimeKj.toDoubleOrNull()?.let { (it * 1000).roundToInt() }?.takeIf { it > 0 },
+                ftpW = ftp.toIntOrNull()?.takeIf { it > 0 },
             )
             saved = true
         },
@@ -218,6 +263,19 @@ fun AthleteSection(settings: SettingsStore, karooFtp: StateFlow<Int?>) {
     ) {
         Text(stringResource(if (saved) R.string.settings_saved else R.string.settings_save))
     }
+}
+
+@Composable
+private fun WattsField(value: String, onValueChange: (String) -> Unit, label: String, default: String) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { onValueChange(it.filter(Char::isDigit)) },
+        label = { Text(label) },
+        supportingText = { Text(default) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 private fun formatKj(joules: Int): String = (joules / 1000.0).toString().removeSuffix(".0")

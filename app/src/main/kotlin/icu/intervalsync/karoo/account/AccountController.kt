@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -36,14 +37,50 @@ class AccountStore(context: Context) {
         get() = prefs.getLong(KEY_SYNCED_AT, 0)
         set(value) = prefs.edit().putLong(KEY_SYNCED_AT, value).apply()
 
+    /** Last trends response and when it was fetched, so opening the app doesn't refetch it. */
+    var trendsJson: String?
+        get() = prefs.getString(KEY_TRENDS, null)
+        set(value) = prefs.edit().putString(KEY_TRENDS, value).apply()
+
+    var contextJson: String?
+        get() = prefs.getString(KEY_CONTEXT, null)
+        set(value) = prefs.edit().putString(KEY_CONTEXT, value).apply()
+
+    var contextAt: Long
+        get() = prefs.getLong(KEY_CONTEXT_AT, 0)
+        set(value) = prefs.edit().putLong(KEY_CONTEXT_AT, value).apply()
+
+    var trendsAt: Long
+        get() = prefs.getLong(KEY_TRENDS_AT, 0)
+        set(value) = prefs.edit().putLong(KEY_TRENDS_AT, value).apply()
+
     fun clear() = prefs.edit().clear().apply()
 
     companion object {
         private const val KEY_TOKEN = "token"
         private const val KEY_ATHLETE_NAME = "athlete_name"
         private const val KEY_SYNCED_AT = "synced_at"
+        private const val KEY_TRENDS = "trends"
+        private const val KEY_CONTEXT = "context"
+        private const val KEY_CONTEXT_AT = "context_at"
+        private const val KEY_TRENDS_AT = "trends_at"
     }
 }
+
+/** Each section in the rider's own words; null where they haven't saved one. */
+data class TrainingContext(
+    val goal: String?,
+    val events: String?,
+    val constraints: String?,
+    val preferences: String?,
+    val notes: String?,
+)
+
+/** One week of training; [weekStart] is the Monday as yyyy-MM-dd. CP and W′ are null where they couldn't be modelled. */
+data class TrendWeek(val weekStart: String, val hours: Double, val cpW: Double?, val wPrimeJ: Double?)
+
+/** Weeks oldest first, ending with the current, partial week. */
+data class Trends(val weeks: List<TrendWeek>)
 
 data class PastRide(val id: String, val name: String, val startedAt: Long, val durationSeconds: Long)
 
@@ -154,6 +191,55 @@ class AccountController(
         return true
     }
 
+    /**
+     * The training context saved to the rider's Intervalsync account. Served from the last
+     * fetch when that is recent enough; null if nothing is cached and it couldn't be fetched.
+     */
+    suspend fun trainingContext(): TrainingContext? {
+        val cached = account.contextJson?.let { parseContext(it) }
+        if (cached != null && System.currentTimeMillis() - account.contextAt < TRENDS_STALE_MS) return cached
+        val json = get("/api/device/context") ?: return cached
+        account.contextJson = json.toString()
+        account.contextAt = System.currentTimeMillis()
+        return parseContext(json.toString()) ?: cached
+    }
+
+    private fun parseContext(stored: String): TrainingContext? {
+        val json = runCatching { Json.parseToJsonElement(stored) as? JsonObject }.getOrNull() ?: return null
+        fun section(key: String): String? = json.string(key)?.trim()?.takeIf { it.isNotEmpty() }
+        return TrainingContext(section("goal"), section("events"), section("constraints"), section("preferences"), section("notes"))
+    }
+
+    /**
+     * Twelve weeks of training hours, CP and W′. Served from the last fetch when that is
+     * recent enough; null if nothing is cached and it couldn't be fetched.
+     */
+    suspend fun trends(): Trends? {
+        val cached = account.trendsJson?.let { parseTrends(it) }
+        if (cached != null && System.currentTimeMillis() - account.trendsAt < TRENDS_STALE_MS) return cached
+        val json = get("/api/device/trends") ?: return cached
+        val trends = parseTrends(json.toString()) ?: return cached
+        account.trendsJson = json.toString()
+        account.trendsAt = System.currentTimeMillis()
+        return trends
+    }
+
+    private fun parseTrends(stored: String): Trends? {
+        val json = runCatching { Json.parseToJsonElement(stored) as? JsonObject }.getOrNull()
+        val weeks = json?.get("weeks") as? JsonArray ?: return null
+        return Trends(
+            weeks.mapNotNull { element ->
+                val week = element as? JsonObject ?: return@mapNotNull null
+                TrendWeek(
+                    weekStart = week.string("week_start") ?: return@mapNotNull null,
+                    hours = week.number("hours") ?: 0.0,
+                    cpW = week.number("cp_w"),
+                    wPrimeJ = week.number("w_prime_j"),
+                )
+            },
+        )
+    }
+
     /** Recent rides with power, newest first; null if they couldn't be fetched. */
     suspend fun pastRides(): List<PastRide>? {
         val json = get("/api/device/rides") ?: return null
@@ -217,5 +303,6 @@ class AccountController(
 
     companion object {
         private const val STALE_MS = 24 * 60 * 60 * 1000L
+        private const val TRENDS_STALE_MS = 6 * 60 * 60 * 1000L
     }
 }
