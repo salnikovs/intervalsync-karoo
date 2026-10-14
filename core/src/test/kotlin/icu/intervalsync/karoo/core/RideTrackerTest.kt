@@ -111,3 +111,15 @@ class ZoneStressTest {
         assertNull(RideTracker(null).tick(200.0, recording = true).zoneStress)
     }
 }
+
+class SummarizeTest {
+    @Test
+    fun aRecordedRideSummarizesLikeTheSameRideLive() {
+        val params = AthleteParams(cpW = 240.0, wPrimeJ = 20_000.0)
+        val power = List(900) { 150.0 } + List(300) { 300.0 } + List(900) { 150.0 }
+        val live = RideTracker(params, ftpW = 250.0)
+        power.forEach { live.tick(it, recording = true) }
+        assertEquals(live.snapshot(), RideTracker.summarize(power, params, ftpW = 250.0))
+        assertEquals(300.0, RideTracker.summarize(power, params, ftpW = 250.0).best5MinW)
+    }
+}

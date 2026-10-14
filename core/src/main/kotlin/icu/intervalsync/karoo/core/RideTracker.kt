@@ -57,6 +57,18 @@ class RideTracker(params: AthleteParams?, ftpW: Double? = null) {
         }
     }
 
+    companion object {
+        /**
+         * Metrics for a finished ride from its 1 Hz power. A recorded ride has no paused
+         * seconds, so W′ gets no recovery for stops.
+         */
+        fun summarize(powerW: List<Double>, params: AthleteParams?, ftpW: Double?): RideSnapshot {
+            val tracker = RideTracker(params, ftpW)
+            powerW.forEach { tracker.tick(it, recording = true) }
+            return tracker.snapshot()
+        }
+    }
+
     fun snapshot(): RideSnapshot = RideSnapshot(
         wPrimeBalanceJ = wPrime?.balanceJ,
         wPrimeFraction = wPrime?.fraction,

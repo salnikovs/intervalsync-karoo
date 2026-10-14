@@ -60,7 +60,34 @@ Session cookie and CSRF token. Body: `{"code": "483920"}`. Approves the pairing 
 }
 ```
 
-`401` means the token was revoked; the device forgets it and shows itself as not connected. The device calls this after pairing and at most once a day after that.
+`401` on any device call means the token was revoked; the device forgets it and shows itself as not connected. The device calls this after pairing and at most once a day after that.
+
+## Past rides
+
+The Karoo can't read rides already recorded on it, so it fetches them back from Intervals.icu through the service and runs them through the same code as a live ride. Both calls happen only when the rider opens the past-rides screen.
+
+### `GET /api/device/rides`
+
+`Authorization: Bearer <device token>`. Rides with power from the last 30 days, newest first, at most 20.
+
+```json
+{
+  "rides": [
+    {"id": "i123", "name": "Morning Ride", "started_at_ms": 1791500000000, "duration_s": 4244}
+  ]
+}
+```
+
+### `GET /api/device/rides/{id}/power`
+
+`Authorization: Bearer <device token>`. The ride's power at 1 Hz, one integer per recorded second, with missing samples as 0.
+
+```json
+{"id": "i123", "started_at_ms": 1791500000000, "watts": [112, 118, 121]}
+```
+
+- `404` — not one of this rider's rides, or it has no power.
+- `413` — longer than 6 hours; the response would be too large for Karoo's HTTP channel.
 
 ## Ride summary (not built on either side yet)
 

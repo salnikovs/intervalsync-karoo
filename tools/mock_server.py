@@ -28,6 +28,21 @@ ATHLETE = {
 }
 EXPIRES_IN = 600
 
+
+def synthetic_power(seconds, hard):
+    """An easy ride with a few efforts at `hard` watts."""
+    power = [150] * seconds
+    for start in range(900, seconds - 600, 1200):
+        power[start:start + 300] = [hard] * 300
+    return power
+
+
+RIDES = {
+    "m1": {"name": "Morning Ride", "started_at_ms": int((time.time() - 86400) * 1000), "watts": synthetic_power(5400, 290)},
+    "m2": {"name": "Threshold 2x20", "started_at_ms": int((time.time() - 3 * 86400) * 1000), "watts": synthetic_power(3600, 245)},
+    "m3": {"name": "Easy spin", "started_at_ms": int((time.time() - 5 * 86400) * 1000), "watts": [130] * 2700},
+}
+
 pairings = {}  # pairing_id -> {code, created, approved, polls}
 tokens = set()
 auto_approve = 0
@@ -87,10 +102,19 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(404, {"error": "not found"})
 
     def do_GET(self):
+        if not self.path.startswith("/api/device/"):
+            return self.reply(404, {"error": "not found"})
+        if not self.token():
+            return self.reply(401, {"error": "unauthorized"})
+        parts = self.path.split("/")
         if self.path == "/api/device/athlete":
-            if not self.token():
-                return self.reply(401, {"error": "unauthorized"})
             self.reply(200, ATHLETE)
+        elif self.path == "/api/device/rides":
+            rides = [{"id": i, "name": r["name"], "started_at_ms": r["started_at_ms"], "duration_s": len(r["watts"])} for i, r in RIDES.items()]
+            self.reply(200, {"rides": rides})
+        elif len(parts) == 6 and parts[3] == "rides" and parts[5] == "power" and parts[4] in RIDES:
+            ride = RIDES[parts[4]]
+            self.reply(200, {"id": parts[4], "started_at_ms": ride["started_at_ms"], "watts": ride["watts"]})
         else:
             self.reply(404, {"error": "not found"})
 

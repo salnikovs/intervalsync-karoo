@@ -38,6 +38,7 @@ import icu.intervalsync.karoo.account.AccountState
 import icu.intervalsync.karoo.account.AccountStore
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.core.AthleteParams
+import icu.intervalsync.karoo.summary.PastRidesActivity
 import icu.intervalsync.karoo.summary.SummaryActivity
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.UserProfile
@@ -67,7 +68,9 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall)
-                        AccountSection(account)
+                        AccountSection(account) {
+                            startActivity(Intent(this@MainActivity, PastRidesActivity::class.java))
+                        }
                         HorizontalDivider()
                         AthleteSection(settings, karooFtp)
                         HorizontalDivider()
@@ -102,7 +105,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AccountSection(account: AccountController) {
+fun AccountSection(account: AccountController, onOpenPastRides: () -> Unit) {
     val state by account.state.collectAsState()
     val scope = rememberCoroutineScope()
 
@@ -138,6 +141,9 @@ fun AccountSection(account: AccountController) {
                 current.athleteName?.let { stringResource(R.string.account_connected_as, it) } ?: stringResource(R.string.account_connected),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            Button(onClick = onOpenPastRides, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.past_rides_open))
+            }
             OutlinedButton(onClick = { scope.launch { account.syncAthlete() } }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.account_sync))
             }

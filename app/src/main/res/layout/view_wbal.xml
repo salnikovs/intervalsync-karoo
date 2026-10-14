@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W′ balance bar along the bottom of the field; Karoo draws the number above it. One bar per colour, only one shown. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ProgressBar
+        android:id="@+id/wbal_bar_good"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="6dp"
+        android:max="100"
+        android:progressDrawable="@drawable/wbal_bar_good"
+        android:visibility="gone" />
+    <ProgressBar
+        android:id="@+id/wbal_bar_warn"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="6dp"
+        android:max="100"
+        android:progressDrawable="@drawable/wbal_bar_warn"
+        android:visibility="gone" />
+    <ProgressBar
+        android:id="@+id/wbal_bar_low"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="6dp"
+        android:max="100"
+        android:progressDrawable="@drawable/wbal_bar_low"
+        android:visibility="gone" />
+</FrameLayout>

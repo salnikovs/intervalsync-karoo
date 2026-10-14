@@ -16,6 +16,7 @@ data class AthleteSettings(
     val wPrimeJ: Int? = null,
     val syncedCpW: Int? = null,
     val syncedWPrimeJ: Int? = null,
+    val syncedFtpW: Int? = null,
 ) {
     /** Typed-in values win, then Intervalsync's, then the Karoo profile's FTP and [AthleteParams.DEFAULT_W_PRIME_J]. */
     fun resolve(karooFtpW: Int?): AthleteParams? {
@@ -33,6 +34,7 @@ class SettingsStore(context: Context) {
         wPrimeJ = positive(KEY_W_PRIME_J),
         syncedCpW = positive(KEY_SYNCED_CP_W),
         syncedWPrimeJ = positive(KEY_SYNCED_W_PRIME_J),
+        syncedFtpW = positive(KEY_SYNCED_FTP_W),
     )
 
     /** Save the values typed in on the Karoo. */
@@ -44,10 +46,11 @@ class SettingsStore(context: Context) {
     }
 
     /** Save the values pulled from Intervalsync. */
-    fun writeSynced(cpW: Int?, wPrimeJ: Int?) {
+    fun writeSynced(cpW: Int?, wPrimeJ: Int?, ftpW: Int?) {
         prefs.edit()
             .putInt(KEY_SYNCED_CP_W, cpW ?: 0)
             .putInt(KEY_SYNCED_W_PRIME_J, wPrimeJ ?: 0)
+            .putInt(KEY_SYNCED_FTP_W, ftpW ?: 0)
             .apply()
     }
 
@@ -66,5 +69,6 @@ class SettingsStore(context: Context) {
         private const val KEY_W_PRIME_J = "w_prime_j"
         private const val KEY_SYNCED_CP_W = "synced_cp_w"
         private const val KEY_SYNCED_W_PRIME_J = "synced_w_prime_j"
+        private const val KEY_SYNCED_FTP_W = "synced_ftp_w"
     }
 }

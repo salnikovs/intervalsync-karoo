@@ -28,6 +28,7 @@ class IntervalsyncExtension : KarooExtension("intervalsync", "0.1.0") {
 
     override val types by lazy {
         listOf(
+            WPrimeGraphicDataType(extension, engine),
             SnapshotDataType(extension, "wbal-kj", engine) { s -> s.wPrimeBalanceJ?.let { (it / 100).roundToInt() / 10.0 } },
             SnapshotDataType(extension, "wbal-pct", engine) { s -> s.wPrimeFraction?.let { (it * 100).roundToInt().toDouble() } },
             SnapshotDataType(extension, "best-5min", engine) { s -> s.best5MinW?.roundToInt()?.toDouble() },

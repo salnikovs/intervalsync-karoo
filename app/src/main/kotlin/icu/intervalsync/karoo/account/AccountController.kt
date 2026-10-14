@@ -10,7 +10,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
 import timber.log.Timber
 import kotlin.math.roundToInt
@@ -40,6 +44,8 @@ class AccountStore(context: Context) {
         private const val KEY_SYNCED_AT = "synced_at"
     }
 }
+
+data class PastRide(val id: String, val name: String, val startedAt: Long, val durationSeconds: Long)
 
 sealed interface AccountState {
     data object NotPaired : AccountState
@@ -140,11 +146,48 @@ class AccountController(
         settings.writeSynced(
             cpW = json.number("cp_w")?.roundToInt(),
             wPrimeJ = json.number("w_prime_j")?.roundToInt(),
+            ftpW = json.number("ftp_w")?.roundToInt(),
         )
         json.string("athlete_name")?.let { account.athleteName = it }
         account.syncedAt = System.currentTimeMillis()
         _state.value = current()
         return true
+    }
+
+    /** Recent rides with power, newest first; null if they couldn't be fetched. */
+    suspend fun pastRides(): List<PastRide>? {
+        val json = get("/api/device/rides") ?: return null
+        val rides = json["rides"] as? JsonArray ?: return null
+        return rides.mapNotNull { element ->
+            val ride = element as? JsonObject ?: return@mapNotNull null
+            PastRide(
+                id = ride.string("id") ?: return@mapNotNull null,
+                name = ride.string("name").orEmpty(),
+                startedAt = ride.number("started_at_ms")?.toLong() ?: return@mapNotNull null,
+                durationSeconds = ride.number("duration_s")?.toLong() ?: 0,
+            )
+        }
+    }
+
+    /** One ride's 1 Hz power; null if it couldn't be fetched. */
+    suspend fun ridePower(id: String): List<Double>? {
+        val json = get("/api/device/rides/$id/power") ?: return null
+        val watts = json["watts"] as? JsonArray ?: return null
+        return watts.map { (it as? JsonPrimitive)?.doubleOrNull ?: 0.0 }
+    }
+
+    private suspend fun get(path: String): JsonObject? {
+        val token = account.token ?: return null
+        val response = try {
+            api.request("GET", path, token = token)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "GET $path failed")
+            return null
+        }
+        if (response.status == 401) forget()
+        return response.json.takeIf { response.status == 200 }
     }
 
     /** At most one sync a day unless asked for. */
@@ -168,7 +211,7 @@ class AccountController(
 
     private fun forget() {
         account.clear()
-        settings.writeSynced(null, null)
+        settings.writeSynced(null, null, null)
         _state.value = AccountState.NotPaired
     }
 

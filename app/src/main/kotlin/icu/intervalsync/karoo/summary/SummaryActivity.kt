@@ -63,7 +63,7 @@ class SummaryActivity : ComponentActivity() {
 }
 
 @Composable
-private fun SummaryContent(summary: RideSummary) {
+internal fun SummaryContent(summary: RideSummary) {
     Text(
         DateUtils.getRelativeTimeSpanString(summary.endedAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString() +
             " · " + stringResource(R.string.summary_duration, summary.recordedSeconds / 3600, summary.recordedSeconds % 3600 / 60),

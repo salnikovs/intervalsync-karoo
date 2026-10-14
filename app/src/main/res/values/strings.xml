@@ -2,6 +2,8 @@
     <string name="app_name">Intervalsync</string>
     <string name="extension_name">Intervalsync</string>
 
+    <string name="wbal_graphic">W′ Balance Bar</string>
+    <string name="wbal_graphic_description">W′ balance as a percentage with a bar that empties as you go above critical power</string>
     <string name="wbal_kj">W′ Balance</string>
     <string name="wbal_kj_description">Work capacity left above critical power, in kJ</string>
     <string name="wbal_pct">W′ Balance %</string>
@@ -17,11 +19,17 @@
 
     <string name="summary_title">Ride summary</string>
     <string name="summary_duration">%1$d h %2$02d min</string>
-    <string name="summary_none">No ride with power has finished yet.</string>
+    <string name="summary_none">No summary yet. Intervalsync can\'t read rides already on the Karoo; it builds a summary from your next ride with a power meter and an Intervalsync field on a ride page.</string>
     <string name="summary_average_power">Average power</string>
     <string name="summary_w_prime_low">W′ balance low</string>
     <string name="summary_zones">Where the stress came from</string>
     <string name="summary_open">Last ride summary</string>
+    <string name="past_rides_open">Past rides</string>
+    <string name="past_rides_title">Past rides</string>
+    <string name="past_rides_loading">Loading from Intervals.icu…</string>
+    <string name="past_rides_failed">Couldn\'t load rides from Intervalsync.</string>
+    <string name="past_rides_empty">No rides with power in the last 30 days.</string>
+    <string name="past_rides_back">Back to rides</string>
     <string name="zone_recovery">Recovery</string>
     <string name="zone_endurance">Endurance</string>
     <string name="zone_tempo">Tempo</string>

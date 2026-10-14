@@ -5,6 +5,12 @@
     id="intervalsync"
     scansDevices="false">
     <DataType
+        description="@string/wbal_graphic_description"
+        displayName="@string/wbal_graphic"
+        graphical="true"
+        icon="@drawable/ic_intervalsync"
+        typeId="wbal-graphic" />
+    <DataType
         description="@string/wbal_kj_description"
         displayName="@string/wbal_kj"
         graphical="false"

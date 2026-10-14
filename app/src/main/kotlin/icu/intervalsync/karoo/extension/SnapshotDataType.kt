@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 /**
  * Numeric data field showing one value of the engine's [RideSnapshot].
  */
-class SnapshotDataType(
+open class SnapshotDataType(
     extension: String,
     typeId: String,
     private val engine: RideEngine,

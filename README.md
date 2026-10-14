@@ -8,6 +8,7 @@ Scaffold with the first in-ride data fields:
 
 | Field | Type ID | Shows |
 | --- | --- | --- |
+| W′ Balance Bar | `wbal-graphic` | W′ balance % with a bar that empties and changes colour (not yet checked on a ride page) |
 | W′ Balance | `wbal-kj` | kJ left above critical power (Skiba differential model) |
 | W′ Balance % | `wbal-pct` | The same, as a share of W′ |
 | Best 5 min | `best-5min` | Best 300 s average power this ride |
@@ -19,7 +20,9 @@ Pairing with Intervalsync is built on the Karoo side: the app shows a code, rece
 
 When a ride with power ends, the app posts a notification that opens a summary: average power, best 5 and 20 min, the lowest W′ balance, and the split of training stress by power zone.
 
-Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, VO2max, send to Intervalsync, FIT developer fields.
+Once connected, a Past rides screen fetches recent rides back from Intervals.icu through the service and summarizes them the same way, since the Karoo can't read rides already recorded on it.
+
+Not built yet: bests vs 90-day PB, Reserve, Form Today, VO2max, send to Intervalsync, FIT developer fields.
 
 ## Roadmap
 
