@@ -156,9 +156,9 @@ class PastRidesActivity : ComponentActivity() {
             val athlete = settings.read()
             val ftp = athlete.resolveFtp(karooFtp)
             val snapshot = withContext(Dispatchers.Default) {
-                RideTracker.summarize(power, athlete.resolve(karooFtp), ftp?.toDouble())
+                RideTracker.summarize(power, athlete.resolve(karooFtp), ftp?.toDouble(), athlete.powerZones.map { it.max?.toDouble() })
             }
-            screen.value = Screen.Summary(ride, RideSummary.of(snapshot, ride.startedAt + ride.durationSeconds * 1000))
+            screen.value = Screen.Summary(ride, RideSummary.of(snapshot, ride.startedAt + ride.durationSeconds * 1000, athlete.powerZones.map { it.name }))
         }
     }
 }

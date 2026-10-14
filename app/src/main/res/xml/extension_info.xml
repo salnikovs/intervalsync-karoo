@@ -34,4 +34,16 @@
         graphical="false"
         icon="@drawable/ic_intervalsync"
         typeId="best-20min" />
+    <DataType
+        description="@string/power_cap_description"
+        displayName="@string/power_cap"
+        graphical="false"
+        icon="@drawable/ic_intervalsync"
+        typeId="power-cap" />
+    <DataType
+        description="@string/hr_cap_description"
+        displayName="@string/hr_cap"
+        graphical="false"
+        icon="@drawable/ic_intervalsync"
+        typeId="hr-cap" />
 </ExtensionInfo>

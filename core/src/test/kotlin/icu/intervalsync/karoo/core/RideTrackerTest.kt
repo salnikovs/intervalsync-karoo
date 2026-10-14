@@ -72,43 +72,52 @@ class RideTrackerTest {
 }
 
 class ZoneStressTest {
+    // Seven zones as Intervals.icu sets them up for a 200 W FTP: 55, 75, 90, 105, 120, 150 % and an open top
+    private val zones = listOf(110.0, 150.0, 180.0, 210.0, 240.0, 300.0, null)
+
     @Test
     fun zoneBoundariesBelongToTheLowerZone() {
-        assertEquals(PowerZone.RECOVERY, PowerZone.of(110.0, 200.0))
-        assertEquals(PowerZone.ENDURANCE, PowerZone.of(111.0, 200.0))
-        assertEquals(PowerZone.THRESHOLD, PowerZone.of(210.0, 200.0))
-        assertEquals(PowerZone.ANAEROBIC, PowerZone.of(600.0, 200.0))
+        val stress = ZoneStress(200.0, zones)
+        assertEquals(0, stress.zoneOf(110.0))
+        assertEquals(1, stress.zoneOf(111.0))
+        assertEquals(3, stress.zoneOf(210.0))
+        assertEquals(6, stress.zoneOf(600.0))
     }
 
     @Test
-    fun anHourAtFtpIsOneHundredInTheThresholdZone() {
-        val stress = ZoneStress(250.0)
-        repeat(3600) { stress.add(250.0) }
-        val byZone = stress.byZone()
-        assertEquals(100.0, assertNotNull(byZone[PowerZone.THRESHOLD]), 1e-9)
-        assertEquals(100.0, byZone.values.sum(), 1e-9)
+    fun powerAboveEveryBoundCountsInTheTopZone() {
+        assertEquals(1, ZoneStress(200.0, listOf(110.0, 150.0)).zoneOf(400.0))
+    }
+
+    @Test
+    fun anHourAtFtpIsOneHundredInItsZone() {
+        val stress = ZoneStress(200.0, zones)
+        repeat(3600) { stress.add(200.0) }
+        assertEquals(100.0, stress.byZone()[3], 1e-9)
+        assertEquals(100.0, stress.byZone().sum(), 1e-9)
     }
 
     @Test
     fun trackerSplitsRecordedSecondsByZoneAndAveragesPower() {
-        val tracker = RideTracker(AthleteParams(cpW = 240.0, wPrimeJ = 20_000.0), ftpW = 250.0)
+        val tracker = RideTracker(AthleteParams(cpW = 240.0, wPrimeJ = 20_000.0), ftpW = 250.0, zoneMaxW = listOf(137.0, 187.0, 225.0, 262.0, 300.0, null))
         repeat(600) { tracker.tick(150.0, recording = true) }
         repeat(600) { tracker.tick(300.0, recording = true) }
         repeat(600) { tracker.tick(0.0, recording = false) }
         val snapshot = tracker.snapshot()
         assertEquals(225.0, snapshot.averagePowerW)
-        val zones = assertNotNull(snapshot.zoneStress)
-        assertEquals(600 * 0.36 / 36, assertNotNull(zones[PowerZone.ENDURANCE]), 1e-9)
-        assertEquals(600 * 1.44 / 36, assertNotNull(zones[PowerZone.VO2MAX]), 1e-9)
-        assertEquals(0.0, zones[PowerZone.RECOVERY])
+        val stress = assertNotNull(snapshot.zoneStress)
+        assertEquals(600 * 0.36 / 36, stress[1], 1e-9)
+        assertEquals(600 * 1.44 / 36, stress[4], 1e-9)
+        assertEquals(0.0, stress[0])
         // 600 s at 60 W above CP drains W′ by 36 kJ
         assertEquals(20_000.0 - 36_000.0, assertNotNull(snapshot.wPrimeMinJ), 1e-6)
         assertEquals(20_000.0, snapshot.wPrimeCapacityJ)
     }
 
     @Test
-    fun noZoneStressWithoutFtp() {
+    fun noZoneStressWithoutTheRidersZones() {
         assertNull(RideTracker(null).tick(200.0, recording = true).zoneStress)
+        assertNull(RideTracker(null, ftpW = 250.0).tick(200.0, recording = true).zoneStress)
     }
 }
 
@@ -116,10 +125,11 @@ class SummarizeTest {
     @Test
     fun aRecordedRideSummarizesLikeTheSameRideLive() {
         val params = AthleteParams(cpW = 240.0, wPrimeJ = 20_000.0)
+        val zones = listOf(137.0, 187.0, 225.0, 262.0, 300.0, null)
         val power = List(900) { 150.0 } + List(300) { 300.0 } + List(900) { 150.0 }
-        val live = RideTracker(params, ftpW = 250.0)
+        val live = RideTracker(params, ftpW = 250.0, zoneMaxW = zones)
         power.forEach { live.tick(it, recording = true) }
-        assertEquals(live.snapshot(), RideTracker.summarize(power, params, ftpW = 250.0))
-        assertEquals(300.0, RideTracker.summarize(power, params, ftpW = 250.0).best5MinW)
+        assertEquals(live.snapshot(), RideTracker.summarize(power, params, ftpW = 250.0, zoneMaxW = zones))
+        assertEquals(300.0, RideTracker.summarize(power, params, ftpW = 250.0, zoneMaxW = zones).best5MinW)
     }
 }

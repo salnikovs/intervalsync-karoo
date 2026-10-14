@@ -27,6 +27,24 @@ ATHLETE = {
     "weight_kg": 75.0,
     "max_hr": 185,
     "resting_hr": 50,
+    "power_zones": [
+        {"name": "Active Recovery", "max_w": 143},
+        {"name": "Endurance", "max_w": 195},
+        {"name": "Tempo", "max_w": 234},
+        {"name": "Threshold", "max_w": 273},
+        {"name": "VO2 Max", "max_w": 312},
+        {"name": "Anaerobic", "max_w": 390},
+        {"name": "Neuromuscular", "max_w": None},
+    ],
+    "hr_zones": [
+        {"name": "Recovery", "max_bpm": 135},
+        {"name": "Aerobic", "max_bpm": 150},
+        {"name": "Tempo", "max_bpm": 158},
+        {"name": "SubThreshold", "max_bpm": 167},
+        {"name": "SuperThreshold", "max_bpm": 172},
+        {"name": "Aerobic Capacity", "max_bpm": 177},
+        {"name": "Anaerobic", "max_bpm": 185},
+    ],
 }
 EXPIRES_IN = 600
 
@@ -94,6 +112,11 @@ class Handler(BaseHTTPRequestHandler):
             token = secrets.token_urlsafe(32)
             tokens.add(token)
             self.reply(200, {"status": "approved", "token": token, "athlete_name": ATHLETE["athlete_name"]})
+        elif self.path == "/api/device/rides":
+            if not self.token():
+                return self.reply(401, {"error": "unauthorized"})
+            print(f"  ride report: {json.dumps(body)}")
+            self.reply(201, {"status": "saved"})
         elif self.path == "/api/devices":
             match = next((p for p in pairings.values() if p["code"] == str(body.get("code"))), None)
             if match is None:
@@ -118,6 +141,52 @@ class Handler(BaseHTTPRequestHandler):
                 "constraints": "8 hours a week. Indoor trainer on weekdays.",
                 "preferences": None,
                 "notes": "",
+            })
+        elif self.path == "/api/device/workouts":
+            today = datetime.date.today()
+            day = lambda n: str(today + datetime.timedelta(days=n))
+            self.reply(200, {"workouts": [
+                {"id": "e1", "date": day(0), "name": "VO2 4x4", "type": "Ride", "duration_s": 3600, "load": 62,
+                 "description": "- 15m 60%\n- 4x 4m 120%, 4m 50%\n- 10m 55%"},
+                {"id": "e2", "date": day(1), "name": "Easy spin", "type": "Ride", "duration_s": 2700, "load": 25, "description": "Keep HR under 130."},
+                {"id": "e3", "date": day(3), "name": "Strength", "type": "WeightTraining", "duration_s": 2400},
+                {"id": "e4", "date": day(5), "name": "Long ride", "type": "Ride", "duration_s": 10800, "load": 150,
+                 "description": "Steady endurance. Eat 60 g of carbs an hour and finish with 3x 8m at tempo if the legs are good."},
+            ]})
+        elif self.path == "/api/device/spaces":
+            today = datetime.date.today()
+            self.reply(200, {"spaces": [
+                {
+                    "name": "Dana Coaching",
+                    "kind": "coach",
+                    "brief": {
+                        "goal": "Sub-5-hour century on 14 March.",
+                        "focus": "Raise threshold through October, then long tempo.",
+                        "priorities": ["Two key sessions a week", "Sleep 8 hours before key days"],
+                        "constraints": "No riding on Fridays.",
+                    },
+                    "updates": [
+                        {"author": "Dana", "date": str(today - datetime.timedelta(days=1)), "text": "Nice control yesterday. Move Thursday's VO2 to Wednesday if the weather turns."},
+                    ],
+                },
+                {
+                    "name": "Sunday Club",
+                    "kind": "team",
+                    "brief": {"goal": "Everyone finishes the spring century together.", "priorities": ["Sunday long ride"]},
+                    "updates": [],
+                },
+            ]})
+        elif self.path == "/api/device/coach":
+            today = datetime.date.today()
+            self.reply(200, {
+                "comments": [
+                    {"date": str(today - datetime.timedelta(days=1)), "scope": "ride", "title": "Z2 Endurance",
+                     "text": "Steady and controlled. Heart rate drifted 4% in the last 20 minutes, so keep fuelling from the start."},
+                    {"date": str(today - datetime.timedelta(days=2)), "scope": "week",
+                     "text": "Seven hours and both key sessions done. This week adds one VO2 day; keep everything else easy."},
+                ],
+                "brief": {"date": str(today), "text": "VO2 4x4 builds your ceiling. Hold 120% for each rep; if the third one fades by more than 10 W, stop after it."},
+                "targets": {"date": str(today), "power_max_w": 312, "hr_max_bpm": 172, "note": "Recoveries really easy."},
             })
         elif self.path == "/api/device/trends":
             today = datetime.date.today()

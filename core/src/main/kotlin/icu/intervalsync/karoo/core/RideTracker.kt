@@ -14,17 +14,18 @@ data class RideSnapshot(
     val best20MinW: Double?,
     /** Null until a second has been recorded. */
     val averagePowerW: Double?,
-    /** Null when no FTP is known for the rider. */
-    val zoneStress: Map<PowerZone, Double>?,
+    /** Stress per power zone, lowest zone first; null when the rider's FTP or zones aren't known. */
+    val zoneStress: List<Double>?,
     val recordedSeconds: Long,
 )
 
 /**
  * All live metrics for one ride, advanced one second at a time.
  */
-class RideTracker(params: AthleteParams?, ftpW: Double? = null) {
+class RideTracker(params: AthleteParams?, ftpW: Double? = null, zoneMaxW: List<Double?>? = null) {
     private var wPrime: WPrimeBalance? = params?.let { WPrimeBalance(it) }
-    private val zones: ZoneStress? = ftpW?.takeIf { it > 0 }?.let { ZoneStress(it) }
+    private val zones: ZoneStress? =
+        if (ftpW != null && ftpW > 0 && !zoneMaxW.isNullOrEmpty()) ZoneStress(ftpW, zoneMaxW) else null
     private val best5Min = RollingBest(300)
     private val best20Min = RollingBest(1200)
     private var recordedSeconds = 0L
@@ -62,8 +63,8 @@ class RideTracker(params: AthleteParams?, ftpW: Double? = null) {
          * Metrics for a finished ride from its 1 Hz power. A recorded ride has no paused
          * seconds, so W′ gets no recovery for stops.
          */
-        fun summarize(powerW: List<Double>, params: AthleteParams?, ftpW: Double?): RideSnapshot {
-            val tracker = RideTracker(params, ftpW)
+        fun summarize(powerW: List<Double>, params: AthleteParams?, ftpW: Double?, zoneMaxW: List<Double?>?): RideSnapshot {
+            val tracker = RideTracker(params, ftpW, zoneMaxW)
             powerW.forEach { tracker.tick(it, recording = true) }
             return tracker.snapshot()
         }

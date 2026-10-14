@@ -14,15 +14,21 @@ Scaffold with the first in-ride data fields:
 | Best 5 min | `best-5min` | Best 300 s average power this ride |
 | Best 20 min | `best-20min` | Best 1,200 s average power this ride |
 
-The app has two tabs. **Training** shows the rider's training context from their Intervalsync account, training hours per week as bars with critical power and W′ as lines over the last 6 or 12 weeks, past rides and the last ride's summary. **Settings** holds the Intervalsync connection and CP, W′ and FTP: a value typed there wins, then the one synced from Intervals.icu, then the Karoo profile's FTP (for CP and FTP) or 20 kJ (for W′).
+The app has three tabs, all filled from the rider's Intervalsync account once the Karoo is connected:
 
-Pairing with Intervalsync is built on the Karoo side: the app shows a code, receives a device token, and then takes CP and W′ from Intervals.icu. intervalsync.icu doesn't have the endpoints yet, so it only works against `tools/mock_server.py`; the contract is in [docs/device-api.md](docs/device-api.md).
+- **Training** — the rider's training context, the brief and latest updates of each coach or team space they belong to, the assistant's coach comments, training hours per week as bars with critical power and W′ as lines over the last 6 or 12 weeks, past rides and the last ride's summary.
+- **Plan** — today's brief and targets from the assistant, then the workouts planned for the next 7 days.
+- **Settings** — the Intervalsync connection, and read-only CP, W′, FTP, power zones and heart rate zones as set up in Intervals.icu. Nothing is typed in on the Karoo. Without a connection the app uses the Karoo profile's FTP and a 20 kJ W′, and has no zones.
 
-When a ride with power ends, the app posts a notification that opens a summary: average power, best 5 and 20 min, the lowest W′ balance, and the split of training stress by power zone.
+Today's targets are also available in-ride as Power Cap and HR Cap fields, with an alert when the 10-second average goes over a cap.
 
-Once connected, a Past rides screen fetches recent rides back from Intervals.icu through the service and summarizes them the same way, since the Karoo can't read rides already recorded on it.
+When a ride with power ends, the app posts a notification that opens a summary: average power, best 5 and 20 min, the lowest W′ balance, and the split of training stress across the rider's own power zones. From there the rider can rate how it felt and send the report to Intervalsync for the assistant.
 
-Not built yet: bests vs 90-day PB, Reserve, Form Today, VO2max, send to Intervalsync, FIT developer fields.
+Past rides are fetched back from Intervals.icu through the service and summarized the same way, since the Karoo can't read rides already recorded on it.
+
+The Karoo side of all this is built and tested against `tools/mock_server.py`; the contract is in [docs/device-api.md](docs/device-api.md). intervalsync.icu doesn't serve these endpoints yet.
+
+Not built yet: bests vs 90-day PB, Reserve, Form Today, VO2max, FIT developer fields.
 
 ## Roadmap
 

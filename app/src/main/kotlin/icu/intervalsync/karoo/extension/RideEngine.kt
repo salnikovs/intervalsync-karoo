@@ -2,7 +2,9 @@ package icu.intervalsync.karoo.extension
 
 import android.os.SystemClock
 import icu.intervalsync.karoo.SettingsStore
+import icu.intervalsync.karoo.account.RideTargets
 import icu.intervalsync.karoo.core.AthleteParams
+import icu.intervalsync.karoo.core.CapMonitor
 import icu.intervalsync.karoo.core.RideSnapshot
 import icu.intervalsync.karoo.core.RideTracker
 import io.hammerhead.karooext.KarooSystemService
@@ -31,7 +33,21 @@ class RideEngine(
     private val settings: SettingsStore,
     /** Called once per ride, when it goes back to Idle after at least [MIN_RIDE_SECONDS] with power. */
     private val onRideEnded: (RideSnapshot) -> Unit = {},
+    /** Today's caps from the assistant, read once as each ride starts. */
+    private val targets: () -> RideTargets? = { null },
+    /** Called when the 10-second average goes over a cap; at most once per cap every two minutes. */
+    private val onOverCap: (Cap, Int) -> Unit = { _, _ -> },
 ) {
+    enum class Cap { POWER, HEART_RATE }
+
+    /** The caps in force for the current ride; null outside a ride or when none were set. */
+    @Volatile
+    var activeTargets: RideTargets? = null
+        private set
+
+    @Volatile
+    private var heartRate: Double? = null
+
     private val _snapshots = MutableStateFlow<RideSnapshot?>(null)
 
     /** Latest metrics; null until a power meter has been seen. */
@@ -49,10 +65,19 @@ class RideEngine(
     @Volatile
     private var ftpW: Double? = null
 
+    /** The rider's power zone upper bounds from Intervalsync; null until synced. */
+    @Volatile
+    private var zoneMaxW: List<Double?>? = null
+
     fun start(scope: CoroutineScope) {
         scope.launch {
             karooSystem.streamDataFlow(DataType.Type.POWER).collect {
                 powerW = (it as? StreamState.Streaming)?.dataPoint?.singleValue
+            }
+        }
+        scope.launch {
+            karooSystem.streamDataFlow(DataType.Type.HEART_RATE).collect {
+                heartRate = (it as? StreamState.Streaming)?.dataPoint?.singleValue
             }
         }
         scope.launch {
@@ -65,10 +90,11 @@ class RideEngine(
             val karooFtp = karooSystem.consumerFlow<UserProfile>()
                 .map<UserProfile, Int?> { it.ftp }
                 .onStart { emit(null) }
-            combine(settings.flow(), karooFtp) { athlete, ftp -> Pair(athlete.resolve(ftp), athlete.resolveFtp(ftp)) }.collect { (athlete, ftp) ->
-                Timber.d("Athlete params now $athlete, FTP $ftp")
-                params = athlete
-                ftpW = ftp?.toDouble()
+            combine(settings.flow(), karooFtp) { athlete, ftp -> Pair(athlete, ftp) }.collect { (athlete, ftp) ->
+                params = athlete.resolve(ftp)
+                ftpW = athlete.resolveFtp(ftp)?.toDouble()
+                zoneMaxW = athlete.powerZones.takeIf { it.isNotEmpty() }?.map { it.max?.toDouble() }
+                Timber.d("Athlete params now $params, FTP $ftpW, ${athlete.powerZones.size} power zones")
             }
         }
         scope.launch { sample() }
@@ -79,6 +105,8 @@ class RideEngine(
         var trackerParams = params
         var idle = true
         var seenPower = false
+        var powerCap = CapMonitor()
+        var heartRateCap = CapMonitor()
         var last = SystemClock.elapsedRealtime()
         while (isActive) {
             delay(200)
@@ -92,6 +120,7 @@ class RideEngine(
                         // Recording or Paused -> Idle: the ride is over
                         val final = tracker.snapshot()
                         if (final.recordedSeconds >= MIN_RIDE_SECONDS) onRideEnded(final)
+                        activeTargets = null
                     }
                     idle = true
                     return@repeat
@@ -99,8 +128,16 @@ class RideEngine(
                 if (idle) {
                     // Idle -> Recording: a new ride
                     idle = false
-                    tracker = RideTracker(params, ftpW)
+                    tracker = RideTracker(params, ftpW, zoneMaxW)
                     trackerParams = params
+                    activeTargets = targets()
+                    powerCap = CapMonitor()
+                    heartRateCap = CapMonitor()
+                }
+                val caps = activeTargets
+                if (caps != null && state is RideState.Recording) {
+                    caps.powerMaxW?.let { if (powerCap.tick(powerW, it.toDouble())) onOverCap(Cap.POWER, it) }
+                    caps.hrMaxBpm?.let { if (heartRateCap.tick(heartRate, it.toDouble())) onOverCap(Cap.HEART_RATE, it) }
                 }
                 if (trackerParams != params) {
                     trackerParams = params
