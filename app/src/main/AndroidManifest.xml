@@ -41,6 +41,11 @@
                 android:name="io.hammerhead.karooext.EXTENSION_INFO"
                 android:resource="@xml/extension_info" />
         </service>
+
+        <!-- Where Karoo finds this app's manifest.json, for installs and updates. Derived from app/manifest.json -->
+        <meta-data
+            android:name="io.hammerhead.karooext.MANIFEST_URL"
+            android:value="${karooManifestUrl}" />
     </application>
 
 </manifest>

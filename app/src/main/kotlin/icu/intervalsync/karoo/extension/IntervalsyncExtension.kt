@@ -1,5 +1,6 @@
 package icu.intervalsync.karoo.extension
 
+import icu.intervalsync.karoo.BuildConfig
 import icu.intervalsync.karoo.R
 import icu.intervalsync.karoo.SettingsStore
 import icu.intervalsync.karoo.account.AccountController
@@ -23,7 +24,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.math.roundToInt
 
-class IntervalsyncExtension : KarooExtension("intervalsync", "0.1.0") {
+class IntervalsyncExtension : KarooExtension("intervalsync", BuildConfig.VERSION_NAME) {
     private val karooSystem by lazy { KarooSystemService(this) }
     private val settings by lazy { SettingsStore(this) }
     private val engine by lazy {
