@@ -1,5 +1,6 @@
 package icu.intervalsync.karoo
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,6 +38,7 @@ import icu.intervalsync.karoo.account.AccountState
 import icu.intervalsync.karoo.account.AccountStore
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.core.AthleteParams
+import icu.intervalsync.karoo.summary.SummaryActivity
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +70,13 @@ class MainActivity : ComponentActivity() {
                         AccountSection(account)
                         HorizontalDivider()
                         AthleteSection(settings, karooFtp)
+                        HorizontalDivider()
+                        OutlinedButton(
+                            onClick = { startActivity(Intent(this@MainActivity, SummaryActivity::class.java)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.summary_open))
+                        }
                     }
                 }
             }
@@ -100,7 +109,16 @@ fun AccountSection(account: AccountController) {
     when (val current = state) {
         is AccountState.NotPaired, is AccountState.Failed -> {
             Text(
-                if (current is AccountState.Failed) current.message else stringResource(R.string.account_intro),
+                if (current is AccountState.Failed) {
+                    when (current.reason) {
+                        AccountState.Failed.Reason.NOT_AVAILABLE -> stringResource(R.string.account_not_available)
+                        AccountState.Failed.Reason.START_REFUSED -> stringResource(R.string.account_failed_start, current.status ?: 0)
+                        AccountState.Failed.Reason.EXPIRED -> stringResource(R.string.account_failed_expired)
+                        AccountState.Failed.Reason.NO_CONNECTION -> stringResource(R.string.account_failed_connection)
+                    }
+                } else {
+                    stringResource(R.string.account_intro)
+                },
                 style = MaterialTheme.typography.bodyMedium,
             )
             Button(onClick = { account.startPairing(scope) }, modifier = Modifier.fillMaxWidth()) {

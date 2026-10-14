@@ -49,7 +49,10 @@ sealed interface AccountState {
 
     data class Paired(val athleteName: String?) : AccountState
 
-    data class Failed(val message: String) : AccountState
+    /** [status] is the HTTP status when the service refused to start a pairing. */
+    data class Failed(val reason: Reason, val status: Int? = null) : AccountState {
+        enum class Reason { NOT_AVAILABLE, START_REFUSED, EXPIRED, NO_CONNECTION }
+    }
 }
 
 /**
@@ -77,7 +80,9 @@ class AccountController(
                 val pairingId = json?.string("pairing_id")
                 val code = json?.string("code")
                 if (created.status != 201 || json == null || pairingId == null || code == null) {
-                    _state.value = AccountState.Failed("Couldn't start pairing (${created.status})")
+                    // 404: this server has no device API
+                    val reason = if (created.status == 404) AccountState.Failed.Reason.NOT_AVAILABLE else AccountState.Failed.Reason.START_REFUSED
+                    _state.value = AccountState.Failed(reason, created.status)
                     return@launch
                 }
                 val url = json.string("verification_url") ?: "intervalsync.icu"
@@ -99,12 +104,12 @@ class AccountController(
                         return@launch
                     }
                 }
-                _state.value = AccountState.Failed("The code expired")
+                _state.value = AccountState.Failed(AccountState.Failed.Reason.EXPIRED)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.w(e, "Pairing failed")
-                _state.value = AccountState.Failed(e.message ?: "No connection")
+                _state.value = AccountState.Failed(AccountState.Failed.Reason.NO_CONNECTION)
             }
         }
     }

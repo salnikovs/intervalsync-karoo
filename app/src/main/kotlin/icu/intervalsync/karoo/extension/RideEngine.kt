@@ -29,6 +29,8 @@ import timber.log.Timber
 class RideEngine(
     private val karooSystem: KarooSystemService,
     private val settings: SettingsStore,
+    /** Called once per ride, when it goes back to Idle after at least [MIN_RIDE_SECONDS] with power. */
+    private val onRideEnded: (RideSnapshot) -> Unit = {},
 ) {
     private val _snapshots = MutableStateFlow<RideSnapshot?>(null)
 
@@ -43,6 +45,9 @@ class RideEngine(
 
     @Volatile
     private var params: AthleteParams? = null
+
+    @Volatile
+    private var ftpW: Double? = null
 
     fun start(scope: CoroutineScope) {
         scope.launch {
@@ -60,9 +65,10 @@ class RideEngine(
             val karooFtp = karooSystem.consumerFlow<UserProfile>()
                 .map<UserProfile, Int?> { it.ftp }
                 .onStart { emit(null) }
-            combine(settings.flow(), karooFtp) { athlete, ftp -> athlete.resolve(ftp) }.collect {
-                Timber.d("Athlete params now $it")
-                params = it
+            combine(settings.flow(), karooFtp) { athlete, ftp -> Pair(athlete.resolve(ftp), ftp) }.collect { (athlete, ftp) ->
+                Timber.d("Athlete params now $athlete, FTP $ftp")
+                params = athlete
+                ftpW = ftp?.takeIf { it > 0 }?.toDouble()
             }
         }
         scope.launch { sample() }
@@ -82,13 +88,18 @@ class RideEngine(
             repeat(seconds.coerceAtMost(MAX_CATCH_UP_SECONDS).toInt()) {
                 val state = rideState
                 if (state is RideState.Idle) {
+                    if (!idle) {
+                        // Recording or Paused -> Idle: the ride is over
+                        val final = tracker.snapshot()
+                        if (final.recordedSeconds >= MIN_RIDE_SECONDS) onRideEnded(final)
+                    }
                     idle = true
                     return@repeat
                 }
                 if (idle) {
                     // Idle -> Recording: a new ride
                     idle = false
-                    tracker = RideTracker(params)
+                    tracker = RideTracker(params, ftpW)
                     trackerParams = params
                 }
                 if (trackerParams != params) {
@@ -107,5 +118,6 @@ class RideEngine(
 
     companion object {
         private const val MAX_CATCH_UP_SECONDS = 600L
+        private const val MIN_RIDE_SECONDS = 60L
     }
 }

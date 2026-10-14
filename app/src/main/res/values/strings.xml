@@ -11,6 +11,31 @@
     <string name="best_20min">Best 20 min</string>
     <string name="best_20min_description">Best 20-minute average power this ride</string>
 
+    <string name="watts">%1$d W</string>
+    <string name="percent">%1$d%%</string>
+    <string name="no_value">–</string>
+
+    <string name="summary_title">Ride summary</string>
+    <string name="summary_duration">%1$d h %2$02d min</string>
+    <string name="summary_none">No ride with power has finished yet.</string>
+    <string name="summary_average_power">Average power</string>
+    <string name="summary_w_prime_low">W′ balance low</string>
+    <string name="summary_zones">Where the stress came from</string>
+    <string name="summary_open">Last ride summary</string>
+    <string name="zone_recovery">Recovery</string>
+    <string name="zone_endurance">Endurance</string>
+    <string name="zone_tempo">Tempo</string>
+    <string name="zone_threshold">Threshold</string>
+    <string name="zone_vo2max">VO2max</string>
+    <string name="zone_anaerobic">Anaerobic</string>
+    <string name="notification_summary">Ride summary ready</string>
+    <string name="notification_summary_bests">Best 5 min %1$d W</string>
+    <string name="notification_view">View</string>
+    <string name="account_not_available">Intervalsync doesn\'t support pairing a Karoo yet.</string>
+    <string name="account_failed_start">Couldn\'t start pairing (error %1$d).</string>
+    <string name="account_failed_expired">The code expired.</string>
+    <string name="account_failed_connection">No connection to Intervalsync.</string>
+
     <string name="settings_title">Intervalsync</string>
     <string name="settings_intro">Critical power and W′ drive the W′ Balance fields. Leave a value empty to use the default.</string>
 

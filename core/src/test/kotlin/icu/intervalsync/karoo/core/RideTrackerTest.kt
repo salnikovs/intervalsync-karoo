@@ -70,3 +70,44 @@ class RideTrackerTest {
         assertEquals(20_000.0, tracker.snapshot().wPrimeBalanceJ)
     }
 }
+
+class ZoneStressTest {
+    @Test
+    fun zoneBoundariesBelongToTheLowerZone() {
+        assertEquals(PowerZone.RECOVERY, PowerZone.of(110.0, 200.0))
+        assertEquals(PowerZone.ENDURANCE, PowerZone.of(111.0, 200.0))
+        assertEquals(PowerZone.THRESHOLD, PowerZone.of(210.0, 200.0))
+        assertEquals(PowerZone.ANAEROBIC, PowerZone.of(600.0, 200.0))
+    }
+
+    @Test
+    fun anHourAtFtpIsOneHundredInTheThresholdZone() {
+        val stress = ZoneStress(250.0)
+        repeat(3600) { stress.add(250.0) }
+        val byZone = stress.byZone()
+        assertEquals(100.0, assertNotNull(byZone[PowerZone.THRESHOLD]), 1e-9)
+        assertEquals(100.0, byZone.values.sum(), 1e-9)
+    }
+
+    @Test
+    fun trackerSplitsRecordedSecondsByZoneAndAveragesPower() {
+        val tracker = RideTracker(AthleteParams(cpW = 240.0, wPrimeJ = 20_000.0), ftpW = 250.0)
+        repeat(600) { tracker.tick(150.0, recording = true) }
+        repeat(600) { tracker.tick(300.0, recording = true) }
+        repeat(600) { tracker.tick(0.0, recording = false) }
+        val snapshot = tracker.snapshot()
+        assertEquals(225.0, snapshot.averagePowerW)
+        val zones = assertNotNull(snapshot.zoneStress)
+        assertEquals(600 * 0.36 / 36, assertNotNull(zones[PowerZone.ENDURANCE]), 1e-9)
+        assertEquals(600 * 1.44 / 36, assertNotNull(zones[PowerZone.VO2MAX]), 1e-9)
+        assertEquals(0.0, zones[PowerZone.RECOVERY])
+        // 600 s at 60 W above CP drains W′ by 36 kJ
+        assertEquals(20_000.0 - 36_000.0, assertNotNull(snapshot.wPrimeMinJ), 1e-6)
+        assertEquals(20_000.0, snapshot.wPrimeCapacityJ)
+    }
+
+    @Test
+    fun noZoneStressWithoutFtp() {
+        assertNull(RideTracker(null).tick(200.0, recording = true).zoneStress)
+    }
+}

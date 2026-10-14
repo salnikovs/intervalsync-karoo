@@ -17,7 +17,9 @@ CP defaults to the FTP in the Karoo profile and W′ to 20 kJ; both can be set i
 
 Pairing with Intervalsync is built on the Karoo side: the app shows a code, receives a device token, and then takes CP and W′ from Intervals.icu. intervalsync.icu doesn't have the endpoints yet, so it only works against `tools/mock_server.py`; the contract is in [docs/device-api.md](docs/device-api.md).
 
-Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, ride contribution, VO2max, the end-of-ride summary and send to Intervalsync, FIT developer fields.
+When a ride with power ends, the app posts a notification that opens a summary: average power, best 5 and 20 min, the lowest W′ balance, and the split of training stress by power zone.
+
+Not built yet: the W′ graphic field, bests vs 90-day PB, Reserve, Form Today, VO2max, send to Intervalsync, FIT developer fields.
 
 ## Roadmap
 

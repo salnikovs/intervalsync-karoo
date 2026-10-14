@@ -17,6 +17,16 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".summary.SummaryActivity"
+            android:exported="true">
+            <!-- Opened by Karoo from the end-of-ride notification -->
+            <intent-filter>
+                <action android:name="icu.intervalsync.karoo.SUMMARY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".extension.IntervalsyncExtension"
             android:exported="true"
