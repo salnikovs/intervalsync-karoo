@@ -1,0 +1,87 @@
+name: Release
+
+# Pushing a tag v<latestVersion from app/manifest.json> builds the signed APK and publishes a
+# GitHub release holding it, manifest.json and the icon. Karoo reads all three from
+# releases/latest/download, so a published release is what riders get as an update.
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # karoo-ext is served from Github Packages, which needs a token even for public packages
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag against manifest.json
+        run: |
+          version="$(jq -r .latestVersion app/manifest.json)"
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match app/manifest.json latestVersion $version (expected v$version)."
+            exit 1
+          fi
+
+      - name: Check the signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$KEYSTORE_BASE64" ] || missing="$missing RELEASE_KEYSTORE_BASE64"
+          [ -n "$KEYSTORE_PASSWORD" ] || missing="$missing RELEASE_KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ] || missing="$missing RELEASE_KEY_ALIAS"
+          [ -n "$KEY_PASSWORD" ] || missing="$missing RELEASE_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing. A release is never signed with the debug key; see Releasing in README.md."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Test metrics
+        run: ./gradlew :core:test
+
+      - name: Build signed APK
+        env:
+          INTERVALSYNC_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          INTERVALSYNC_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          INTERVALSYNC_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          INTERVALSYNC_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease
+
+      - name: Collect release files
+        run: |
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk dist/intervalsync-karoo.apk
+          cp app/manifest.json dist/manifest.json
+          cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.png dist/intervalsync-karoo.png
+          "$ANDROID_HOME"/build-tools/"$(ls "$ANDROID_HOME"/build-tools | sort -V | tail -1)"/apksigner verify dist/intervalsync-karoo.apk
+
+      - name: Publish release
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "$GITHUB_REF_NAME" \
+            --notes "$(jq -r '.releaseNotes // ""' app/manifest.json)"
+
+      - name: Remove the keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"

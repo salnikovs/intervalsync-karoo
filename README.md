@@ -66,6 +66,16 @@ gpr.key=<token>
 
 CI runs the tests and builds a debug APK on every push; the APK is attached to the workflow run.
 
+## Releasing
+
+The version lives in `app/manifest.json` (`latestVersion`, `latestVersionCode`), the file Karoo reads to install and update the app; the Gradle build and the extension take it from there.
+
+1. Raise both version fields in `app/manifest.json`, write `releaseNotes`, and merge to `main`.
+2. Tag that commit `v<latestVersion>` and push the tag.
+3. The Release workflow builds the signed APK and publishes it with manifest.json and the icon as a GitHub release. Karoo reads them from `releases/latest/download`.
+
+Release builds are signed with the key in the repository secrets `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD`, and fail without it rather than fall back to the debug key. Locally, `:app:assembleRelease` reads `INTERVALSYNC_KEYSTORE_FILE`, `INTERVALSYNC_KEYSTORE_PASSWORD`, `INTERVALSYNC_KEY_ALIAS` and `INTERVALSYNC_KEY_PASSWORD` from the environment.
+
 ## Testing without riding
 
 [karoo-ride-replay](https://support.hammerhead.io/hc/en-us/community/posts/53155430254619-karoo-ride-replay-replay-a-recorded-ride-s-data-to-test-your-extension-no-ride-needed) plays a recorded FIT file as a live ride.
