@@ -16,7 +16,7 @@ val manifestVersionCode = karooManifest["latestVersionCode"] as Int
 // manifest.json is published next to the APK it points at
 val manifestUrl = (karooManifest["latestApkUrl"] as String).substringBeforeLast('/') + "/manifest.json"
 
-// Release signing comes from the environment only; see docs/submission.md.
+// Release signing comes from the environment only; see Releasing in README.md.
 val signingEnv = listOf(
     "INTERVALSYNC_KEYSTORE_FILE",
     "INTERVALSYNC_KEYSTORE_PASSWORD",
@@ -82,7 +82,7 @@ val checkReleaseSigning by tasks.registering {
         if (missing.isNotEmpty()) {
             throw GradleException(
                 "Release signing is not configured: set ${missing.joinToString()}. " +
-                    "Release builds are never signed with the debug key; see docs/submission.md.",
+                    "Release builds are never signed with the debug key; see Releasing in README.md.",
             )
         }
         if (keystore?.isFile != true) {
