@@ -250,7 +250,7 @@ Written by the rider's Intervalsync assistant, or by their coach, for the Karoo.
 
 - `comments` — notes after reviewing training, newest first, at most 10. `scope` is `ride` or `week`; `title` is optional. `ride_id` is optional: the `id` from `GET /api/device/rides` of the ride a `ride` comment is about. Without it the Karoo matches a ride comment to a past ride by date, and only when it is the one ride comment of that day.
 - `author` (on a comment or the brief) is optional: the display name of the coach who wrote it, when a person did. Omitted when the assistant wrote it.
-- `brief` — what the day's workout is for and what to watch, from the assistant or the rider's coach. The Karoo shows it only on its `date`, at the top of its Training tab (four lines until tapped) and on its Plan tab.
+- `brief` — what the day's workout is for and what to watch, from the assistant or the rider's coach. The Karoo shows it only on its `date`, at the top of its Training tab, four lines until tapped.
 - `targets` — caps for the day's ride; each of `power_max_w`, `hr_max_bpm` and `note` is optional. The Karoo applies them only on their `date`: it shows them, offers them as data fields, and warns the rider in-ride when the 10-second average goes over a cap.
 - `brief` and `targets` are `null` or omitted when the assistant hasn't set them.
 

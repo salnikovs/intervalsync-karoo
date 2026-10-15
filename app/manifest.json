@@ -7,6 +7,6 @@
   "latestVersionCode": 7,
   "developer": "Intervalsync",
   "description": "W′ balance and best-power data fields, an end-of-ride summary, and your Intervalsync account on the Karoo: training context, coach and team spaces, planned workouts, and today's brief and power and heart rate caps with in-ride alerts. Connecting needs an account at intervalsync.icu.",
-  "releaseNotes": "Settings tab: your Intervalsync plan under the connection, and the coach and teams you belong to.",
+  "releaseNotes": "Settings tab: your Intervalsync plan under the connection, and the coach and teams you belong to. Today's brief now shows only on the Training tab.",
   "tags": ["performance"]
 }

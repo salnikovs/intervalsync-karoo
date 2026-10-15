@@ -150,25 +150,16 @@ private fun briefTitle(brief: RideBrief): String =
 
 private const val BRIEF_LINES = 4
 
-/** Today's brief and targets, at the top of the Plan tab. Nothing on days without them. */
+/** Today's targets, at the top of the Plan tab; the brief is on the Training tab. Nothing on days without them. */
 @Composable
 fun TodaySection(account: AccountController) {
-    val coach = rememberCoach(account) ?: return
-    val today = Coach.today()
-    val brief = coach.briefFor(today)
-    val targets = coach.targetsFor(today)?.takeIf { it.powerMaxW != null || it.hrMaxBpm != null || it.note != null }
-    if (brief == null && targets == null) return
+    val targets = rememberCoach(account)?.targetsFor(Coach.today())
+        ?.takeIf { it.powerMaxW != null || it.hrMaxBpm != null || it.note != null } ?: return
 
-    if (brief != null) {
-        Text(briefTitle(brief), style = MaterialTheme.typography.titleMedium)
-        Text(brief.text, style = MaterialTheme.typography.bodyMedium)
-    }
-    if (targets != null) {
-        Text(stringResource(R.string.targets_title), style = MaterialTheme.typography.titleMedium)
-        targets.powerMaxW?.let { Text(stringResource(R.string.targets_power, it), style = MaterialTheme.typography.bodyLarge) }
-        targets.hrMaxBpm?.let { Text(stringResource(R.string.targets_hr, it), style = MaterialTheme.typography.bodyLarge) }
-        targets.note?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-    }
+    Text(stringResource(R.string.targets_title), style = MaterialTheme.typography.titleMedium)
+    targets.powerMaxW?.let { Text(stringResource(R.string.targets_power, it), style = MaterialTheme.typography.bodyLarge) }
+    targets.hrMaxBpm?.let { Text(stringResource(R.string.targets_hr, it), style = MaterialTheme.typography.bodyLarge) }
+    targets.note?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
     HorizontalDivider()
 }
 
