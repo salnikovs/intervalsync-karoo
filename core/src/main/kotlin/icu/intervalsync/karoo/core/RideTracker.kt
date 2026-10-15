@@ -17,6 +17,11 @@ data class RideSnapshot(
     /** Stress per power zone, lowest zone first; null when the rider's FTP or zones aren't known. */
     val zoneStress: List<Double>?,
     val recordedSeconds: Long,
+    /** Best 5 s, 15 s, 30 s and 1 min average power so far. */
+    val best5sW: Double? = null,
+    val best15sW: Double? = null,
+    val best30sW: Double? = null,
+    val best1MinW: Double? = null,
 )
 
 /**
@@ -26,6 +31,10 @@ class RideTracker(params: AthleteParams?, ftpW: Double? = null, zoneMaxW: List<D
     private var wPrime: WPrimeBalance? = params?.let { WPrimeBalance(it) }
     private val zones: ZoneStress? =
         if (ftpW != null && ftpW > 0 && !zoneMaxW.isNullOrEmpty()) ZoneStress(ftpW, zoneMaxW) else null
+    private val best5s = RollingBest(5)
+    private val best15s = RollingBest(15)
+    private val best30s = RollingBest(30)
+    private val best1Min = RollingBest(60)
     private val best5Min = RollingBest(300)
     private val best20Min = RollingBest(1200)
     private var recordedSeconds = 0L
@@ -40,6 +49,10 @@ class RideTracker(params: AthleteParams?, ftpW: Double? = null, zoneMaxW: List<D
     fun tick(powerW: Double, recording: Boolean): RideSnapshot {
         wPrime?.update(powerW)
         if (recording) {
+            best5s.add(powerW)
+            best15s.add(powerW)
+            best30s.add(powerW)
+            best1Min.add(powerW)
             best5Min.add(powerW)
             best20Min.add(powerW)
             zones?.add(powerW)
@@ -80,5 +93,9 @@ class RideTracker(params: AthleteParams?, ftpW: Double? = null, zoneMaxW: List<D
         averagePowerW = if (recordedSeconds > 0) recordedJoules / recordedSeconds else null,
         zoneStress = zones?.byZone(),
         recordedSeconds = recordedSeconds,
+        best5sW = best5s.bestW,
+        best15sW = best15s.bestW,
+        best30sW = best30s.bestW,
+        best1MinW = best1Min.bestW,
     )
 }

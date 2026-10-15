@@ -30,6 +30,11 @@ data class RideSummary(
     val feel: Int? = null,
     /** True once this ride's report has been saved by Intervalsync. */
     val sent: Boolean = false,
+    /** Short bests, shown on the Karoo only; not part of the report. */
+    val best5sW: Double? = null,
+    val best15sW: Double? = null,
+    val best30sW: Double? = null,
+    val best1MinW: Double? = null,
 ) {
     /** Lowest W′ balance as a share of W′, 0..1. */
     val wPrimeMinFraction: Double?
@@ -77,6 +82,10 @@ data class RideSummary(
                 }
             }
         }
+        put("best_5s_w", best5sW)
+        put("best_15s_w", best15sW)
+        put("best_30s_w", best30sW)
+        put("best_1min_w", best1MinW)
     }
 
     companion object {
@@ -90,6 +99,10 @@ data class RideSummary(
             wPrimeMinJ = snapshot.wPrimeMinJ,
             wPrimeCapacityJ = snapshot.wPrimeCapacityJ,
             zoneStress = snapshot.zoneStress?.takeIf { it.size == zoneNames.size }?.let { zoneNames.zip(it) },
+            best5sW = snapshot.best5sW,
+            best15sW = snapshot.best15sW,
+            best30sW = snapshot.best30sW,
+            best1MinW = snapshot.best1MinW,
         )
 
         fun fromJson(json: JsonObject): RideSummary? {
@@ -108,6 +121,10 @@ data class RideSummary(
                 zoneStress = zones?.takeIf { it.isNotEmpty() },
                 feel = json.number("feel")?.toInt(),
                 sent = (json["sent"] as? JsonPrimitive)?.booleanOrNull ?: false,
+                best5sW = json.number("best_5s_w"),
+                best15sW = json.number("best_15s_w"),
+                best30sW = json.number("best_30s_w"),
+                best1MinW = json.number("best_1min_w"),
             )
         }
     }

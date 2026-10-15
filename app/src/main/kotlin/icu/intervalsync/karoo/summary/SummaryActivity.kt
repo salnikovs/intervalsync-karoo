@@ -162,6 +162,10 @@ internal fun SummaryContent(summary: RideSummary) {
     }
     HorizontalDivider()
     Metric(stringResource(R.string.summary_average_power), summary.averagePowerW?.let { stringResource(R.string.watts, it.roundToInt()) })
+    Metric(stringResource(R.string.best_5s), summary.best5sW?.let { stringResource(R.string.watts, it.roundToInt()) })
+    Metric(stringResource(R.string.best_15s), summary.best15sW?.let { stringResource(R.string.watts, it.roundToInt()) })
+    Metric(stringResource(R.string.best_30s), summary.best30sW?.let { stringResource(R.string.watts, it.roundToInt()) })
+    Metric(stringResource(R.string.best_1min), summary.best1MinW?.let { stringResource(R.string.watts, it.roundToInt()) })
     Metric(stringResource(R.string.best_5min), summary.best5MinW?.let { stringResource(R.string.watts, it.roundToInt()) })
     Metric(stringResource(R.string.best_20min), summary.best20MinW?.let { stringResource(R.string.watts, it.roundToInt()) })
     Metric(

@@ -35,6 +35,25 @@ class RideTrackerTest {
     private val params = AthleteParams(cpW = 300.0, wPrimeJ = 20_000.0)
 
     @Test
+    fun shortBestsCoverTheirOwnWindows() {
+        // 10 s at 800 W inside an hour at 200 W
+        val power = List(1800) { 200.0 } + List(10) { 800.0 } + List(1790) { 200.0 }
+        val snapshot = RideTracker.summarize(power, params, ftpW = null, zoneMaxW = null)
+        assertEquals(800.0, snapshot.best5sW)
+        assertEquals((10 * 800.0 + 5 * 200.0) / 15, snapshot.best15sW)
+        assertEquals((10 * 800.0 + 20 * 200.0) / 30, snapshot.best30sW)
+        assertEquals((10 * 800.0 + 50 * 200.0) / 60, snapshot.best1MinW)
+    }
+
+    @Test
+    fun shortBestsWaitForAFullWindow() {
+        val snapshot = RideTracker.summarize(List(20) { 300.0 }, params, ftpW = null, zoneMaxW = null)
+        assertEquals(300.0, snapshot.best15sW)
+        assertNull(snapshot.best30sW)
+        assertNull(snapshot.best1MinW)
+    }
+
+    @Test
     fun tracksBestsOverRecordedTime() {
         val tracker = RideTracker(params)
         repeat(300) { tracker.tick(250.0, recording = true) }
