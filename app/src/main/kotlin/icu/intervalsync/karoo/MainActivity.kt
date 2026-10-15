@@ -129,6 +129,7 @@ class MainActivity : ComponentActivity() {
                                 TrainingContextSection(account)
                                 MembershipsSection(account)
                                 SettingsSection(settings, karooFtp)
+                                RideTypeSection(settings)
                                 BillingSection(account)
                             }
                         }
@@ -254,6 +255,29 @@ private fun ValueRow(label: String, value: String?) {
 
 /** Each zone as "Z2 Endurance   137–186 W"; the range starts where the zone below ended. */
 private fun formatKj(joules: Int): String = (joules / 1000.0).toString().removeSuffix(".0")
+
+/** What new rides are recorded as, for Intervals.icu and other services reading the ride file. */
+@Composable
+fun RideTypeSection(settings: SettingsStore) {
+    val type by remember { settings.rideTypeFlow() }.collectAsState(settings.rideType)
+    HorizontalDivider()
+    Text(stringResource(R.string.ride_type_title), style = MaterialTheme.typography.titleMedium)
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        listOf(null to R.string.ride_type_unset, RideType.ROAD to R.string.ride_type_road, RideType.GRAVEL to R.string.ride_type_gravel, RideType.MTB to R.string.ride_type_mtb)
+            .forEach { (option, label) ->
+                val chosen = option == type
+                val onClick = { settings.rideType = option }
+                if (chosen) {
+                    Button(onClick = onClick, modifier = Modifier.weight(1f), contentPadding = ChipPadding) { Text(stringResource(label), maxLines = 1) }
+                } else {
+                    OutlinedButton(onClick = onClick, modifier = Modifier.weight(1f), contentPadding = ChipPadding) { Text(stringResource(label), maxLines = 1) }
+                }
+            }
+    }
+    Text(stringResource(R.string.ride_type_hint), style = MaterialTheme.typography.bodySmall)
+}
+
+private val ChipPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
 
 /** The app's light green, as in the trend charts. */
 private val SyncColor = Color(0xFFB8F04A)

@@ -14,6 +14,15 @@ import icu.intervalsync.karoo.summary.RideReporter
 import icu.intervalsync.karoo.summary.RideSummary
 import icu.intervalsync.karoo.summary.SummaryStore
 import io.hammerhead.karooext.KarooSystemService
+import io.hammerhead.karooext.internal.Emitter
+import io.hammerhead.karooext.models.FieldValue
+import io.hammerhead.karooext.models.FitEffect
+import io.hammerhead.karooext.models.RideState
+import io.hammerhead.karooext.models.WriteToSessionMesg
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import io.hammerhead.karooext.models.InRideAlert
 import io.hammerhead.karooext.models.SystemNotification
 import io.hammerhead.karooext.extension.KarooExtension
@@ -101,6 +110,23 @@ class IntervalsyncExtension : KarooExtension("intervalsync", BuildConfig.VERSION
         }
     }
 
+    /** Writes the rider's ride type into the ride file's session, once recording starts and again if it changes. */
+    override fun startFit(emitter: Emitter<FitEffect>) {
+        val job = scope.launch {
+            karooSystem.consumerFlow<RideState>()
+                .map { it !is RideState.Idle }
+                .distinctUntilChanged()
+                .combine(settings.rideTypeFlow()) { riding, type -> type?.takeIf { riding } }
+                .filterNotNull()
+                .distinctUntilChanged()
+                .collect { type ->
+                    Timber.i("Ride type in the FIT session: $type")
+                    emitter.onNext(WriteToSessionMesg(FieldValue(SESSION_SUB_SPORT, type.subSport.toDouble())))
+                }
+        }
+        emitter.setCancellable { job.cancel() }
+    }
+
     override fun onDestroy() {
         scope.cancel()
         karooSystem.disconnect()
@@ -110,5 +136,8 @@ class IntervalsyncExtension : KarooExtension("intervalsync", BuildConfig.VERSION
     private companion object {
         const val REPORT_ATTEMPTS = 12
         const val REPORT_RETRY_MS = 5 * 60_000L
+
+        /** The FIT SDK's field number for sub_sport in a session message. */
+        const val SESSION_SUB_SPORT = 6
     }
 }
