@@ -17,6 +17,16 @@ import kotlin.math.roundToInt
 data class Zone(val name: String, val max: Int?)
 
 /**
+ * A ride's kind as the FIT file's session sub_sport says it. Karoo writes "generic", so
+ * Intervals.icu and others file every ride as a plain Ride; this lets the rider say which.
+ */
+enum class RideType(val subSport: Int) {
+    ROAD(7),
+    GRAVEL(46),
+    MTB(8),
+}
+
+/**
  * What the rider set up in Intervals.icu, as last synced through Intervalsync.
  * Everything is null or empty until the Karoo is connected.
  */
@@ -69,6 +79,19 @@ class SettingsStore(context: Context) {
         get() = prefs.getInt(KEY_TREND_WEEKS, 6)
         set(value) = prefs.edit().putInt(KEY_TREND_WEEKS, value).apply()
 
+    /** What new rides are written as in the ride file; null leaves Karoo's own choice. */
+    var rideType: RideType?
+        get() = prefs.getString(KEY_RIDE_TYPE, null)?.let { stored -> RideType.entries.firstOrNull { it.name == stored } }
+        set(value) = prefs.edit().putString(KEY_RIDE_TYPE, value?.name).apply()
+
+    /** [rideType] now, then again whenever it changes. */
+    fun rideTypeFlow(): Flow<RideType?> = callbackFlow {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == KEY_RIDE_TYPE) trySend(rideType) }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        trySend(rideType)
+        awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+
     /** Current settings, then again on every change. */
     fun flow(): Flow<AthleteSettings> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> trySend(read()) }
@@ -95,5 +118,6 @@ class SettingsStore(context: Context) {
         private const val KEY_POWER_ZONES = "power_zones"
         private const val KEY_HR_ZONES = "hr_zones"
         private const val KEY_TREND_WEEKS = "trend_weeks"
+        private const val KEY_RIDE_TYPE = "ride_type"
     }
 }

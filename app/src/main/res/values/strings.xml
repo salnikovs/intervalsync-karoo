@@ -76,6 +76,12 @@
     <string name="account_connected">Connected to Intervalsync</string>
     <string name="account_connected_as">Connected to Intervalsync as %1$s</string>
     <string name="account_sync">Sync now</string>
+    <string name="ride_type_title">Ride type</string>
+    <string name="ride_type_unset">Karoo</string>
+    <string name="ride_type_road">Road</string>
+    <string name="ride_type_gravel">Gravel</string>
+    <string name="ride_type_mtb">MTB</string>
+    <string name="ride_type_hint">Written into each new ride\'s file, so Intervals.icu and others file it as this rather than as a plain Ride. "Karoo" leaves Karoo\'s own.</string>
     <string name="billing_title">Billing and subscription</string>
     <string name="billing_plan">Plan</string>
     <string name="billing_renews">Renews %1$s</string>
