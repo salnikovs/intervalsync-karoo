@@ -44,6 +44,7 @@ import icu.intervalsync.karoo.account.TrainingContextSection
 import icu.intervalsync.karoo.account.TrendsSection
 import icu.intervalsync.karoo.account.BriefCard
 import icu.intervalsync.karoo.account.CoachCommentsSection
+import icu.intervalsync.karoo.account.BillingSection
 import icu.intervalsync.karoo.account.MembershipsSection
 import icu.intervalsync.karoo.account.WellnessRow
 import icu.intervalsync.karoo.account.IntervalsyncApi
@@ -128,6 +129,7 @@ class MainActivity : ComponentActivity() {
                                 TrainingContextSection(account)
                                 MembershipsSection(account)
                                 SettingsSection(settings, karooFtp)
+                                BillingSection(account)
                             }
                         }
                     }
@@ -203,7 +205,6 @@ fun AccountSection(account: AccountController) {
                 current.athleteName?.let { stringResource(R.string.account_connected_as, it) } ?: stringResource(R.string.account_connected),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            current.plan?.let { Text(stringResource(R.string.account_plan, it), style = MaterialTheme.typography.bodyMedium) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick = { scope.launch { account.syncAthlete() } },
@@ -241,8 +242,6 @@ fun SettingsSection(settings: SettingsStore, karooFtp: StateFlow<Int?>) {
     ValueRow(stringResource(R.string.settings_cp), params?.let { stringResource(R.string.watts, it.cpW.roundToInt()) })
     ValueRow(stringResource(R.string.settings_w_prime), params?.let { stringResource(R.string.kilojoules, formatKj(it.wPrimeJ.roundToInt())) })
     ValueRow(stringResource(R.string.settings_ftp), ftp?.let { stringResource(R.string.watts, it) })
-    ZoneList(stringResource(R.string.settings_power_zones), stored.powerZones, R.string.zone_range_watts, R.string.zone_above_watts)
-    ZoneList(stringResource(R.string.settings_hr_zones), stored.hrZones, R.string.zone_range_bpm, R.string.zone_above_bpm)
 }
 
 @Composable
@@ -254,23 +253,6 @@ private fun ValueRow(label: String, value: String?) {
 }
 
 /** Each zone as "Z2 Endurance   137–186 W"; the range starts where the zone below ended. */
-@Composable
-private fun ZoneList(title: String, zones: List<Zone>, rangeFormat: Int, aboveFormat: Int) {
-    if (zones.isEmpty()) return
-    HorizontalDivider()
-    Text(title, style = MaterialTheme.typography.titleMedium)
-    zones.forEachIndexed { index, zone ->
-        val from = if (index == 0) 0 else (zones[index - 1].max ?: 0) + 1
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.zone_label, index + 1, zone.name), style = MaterialTheme.typography.bodyMedium)
-            Text(
-                zone.max?.let { stringResource(rangeFormat, from, it) } ?: stringResource(aboveFormat, from),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-    }
-}
-
 private fun formatKj(joules: Int): String = (joules / 1000.0).toString().removeSuffix(".0")
 
 /** The app's light green, as in the trend charts. */

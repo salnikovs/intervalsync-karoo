@@ -37,6 +37,38 @@ private fun rememberCoach(account: AccountController): Coach? {
 }
 
 /**
+ * The rider's Intervalsync plan and where it stands, at the bottom of the Settings tab.
+ * Nothing is bought or changed on the Karoo; that is done at intervalsync.icu.
+ */
+@Composable
+fun BillingSection(account: AccountController) {
+    val state by account.state.collectAsState()
+    val billing = (state as? AccountState.Paired)?.billing ?: return
+    val context = LocalContext.current
+    fun day(date: String?) = date?.let { DayFormat.parse(it) }?.let {
+        DateUtils.formatDateTime(context, it.time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH)
+    }
+    HorizontalDivider()
+    Text(stringResource(R.string.billing_title), style = MaterialTheme.typography.titleMedium)
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(stringResource(R.string.billing_plan), style = MaterialTheme.typography.bodyLarge)
+        Text(billing.plan, style = MaterialTheme.typography.titleLarge)
+    }
+    val renews = day(billing.renewsOn)
+    val ends = day(billing.endsOn)
+    when {
+        billing.status == "past_due" -> R.string.billing_past_due to null
+        billing.status == "trialing" && ends != null -> R.string.billing_trial_ends to ends
+        ends != null -> R.string.billing_ends to ends
+        renews != null -> R.string.billing_renews to renews
+        else -> null
+    }?.let { (text, date) ->
+        Text(if (date != null) stringResource(text, date) else stringResource(text), style = MaterialTheme.typography.bodyMedium)
+    }
+    Text(stringResource(R.string.billing_manage), style = MaterialTheme.typography.bodySmall)
+}
+
+/**
  * The coach and teams the rider belongs to, on the Settings tab. Each is its name until
  * tapped, then the brief its members share and its latest updates: other people's words,
  * so always under the space's name. Nothing without any.

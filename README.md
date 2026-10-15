@@ -18,7 +18,7 @@ The app has three tabs, all filled from the rider's Intervalsync account once th
 
 - **Training** — today's brief, this morning's HRV, resting HR and sleep from Intervals.icu, training hours per week as bars with critical power and W′ as lines over the last 6 or 12 weeks, coach comments, past rides and the last ride's summary.
 - **Plan** — today's targets, then the workouts planned for the next 7 days, each with a button to Karoo's Workouts list.
-- **Settings** — the Intervalsync connection, the rider's training context and the coach and team spaces they belong to (each collapsed until tapped), and read-only CP, W′, FTP, power zones and heart rate zones as set up in Intervals.icu. Nothing is typed in on the Karoo. Without a connection the app uses the Karoo profile's FTP and a 20 kJ W′, and has no zones.
+- **Settings** — the Intervalsync connection, the rider's training context and the coach and team spaces they belong to (each collapsed until tapped), read-only CP, W′ and FTP as set up in Intervals.icu (the zones are still used for the ride summary, but not listed), and the Intervalsync plan and subscription. Nothing is typed in or bought on the Karoo. Without a connection the app uses the Karoo profile's FTP and a 20 kJ W′, and has no zones.
 
 Today's targets are also available in-ride as Power Cap and HR Cap fields, with an alert when the 10-second average goes over a cap.
 
