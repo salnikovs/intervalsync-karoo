@@ -129,5 +129,6 @@
     <string name="plan_today">Today</string>
     <string name="plan_tomorrow">Tomorrow</string>
     <string name="plan_load">load %1$d</string>
+    <string name="plan_open_workouts">Open in Workouts</string>
     <string name="training_not_connected">Connect to Intervalsync on the Settings tab to see your training context, consistency and past rides here.</string>
 </resources>
