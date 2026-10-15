@@ -5,23 +5,33 @@ import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -29,8 +39,10 @@ import icu.intervalsync.karoo.R
 import icu.intervalsync.karoo.SettingsStore
 import icu.intervalsync.karoo.account.AccountController
 import icu.intervalsync.karoo.account.AccountStore
+import icu.intervalsync.karoo.account.CoachComment
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.account.PastRide
+import icu.intervalsync.karoo.account.RideRecord
 import icu.intervalsync.karoo.core.RideTracker
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.UserProfile
@@ -51,7 +63,7 @@ class PastRidesActivity : ComponentActivity() {
 
         data class Rides(val rides: List<PastRide>) : Screen
 
-        data class Summary(val ride: PastRide, val summary: RideSummary) : Screen
+        data class Summary(val ride: PastRide, val summary: RideSummary, val comment: CoachComment?) : Screen
     }
 
     private val karooSystem by lazy { KarooSystemService(this) }
@@ -61,9 +73,12 @@ class PastRidesActivity : ComponentActivity() {
     private var rides: List<PastRide> = emptyList()
     private var karooFtp: Int? = null
     private var profileConsumer: String? = null
+    /** Opened as the last ride summary: go straight to the newest ride, once. */
+    private var openLatest = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        openLatest = savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_LATEST, false)
 
         setContent {
             val current by screen.collectAsState()
@@ -103,12 +118,30 @@ class PastRidesActivity : ComponentActivity() {
                                                 " · " + stringResource(R.string.summary_duration, ride.durationSeconds / 3600, ride.durationSeconds % 3600 / 60),
                                             style = MaterialTheme.typography.bodyMedium,
                                         )
+                                        RecordBadges(ride.records)
                                     }
                                 }
                             }
                             is Screen.Summary -> {
                                 Text(shown.ride.name, style = MaterialTheme.typography.headlineSmall)
-                                SummaryContent(shown.summary)
+                                RecordBadges(shown.ride.records)
+                                var tab by rememberSaveable(shown.ride.id) { mutableIntStateOf(0) }
+                                TabRow(selectedTabIndex = tab) {
+                                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.ride_tab_ride)) })
+                                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.ride_tab_coach)) })
+                                }
+                                if (tab == 0) {
+                                    SummaryContent(shown.summary)
+                                    if (shown.ride.records.isNotEmpty()) {
+                                        HorizontalDivider()
+                                        Text(stringResource(R.string.records_title), style = MaterialTheme.typography.titleMedium)
+                                        shown.ride.records.forEach { record ->
+                                            Metric(recordDuration(record.durationSeconds), stringResource(R.string.watts, record.watts))
+                                        }
+                                    }
+                                } else {
+                                    RideComment(shown.comment)
+                                }
                                 OutlinedButton(onClick = { screen.value = Screen.Rides(rides) }, modifier = Modifier.fillMaxWidth()) {
                                     Text(stringResource(R.string.past_rides_back))
                                 }
@@ -142,6 +175,10 @@ class PastRidesActivity : ComponentActivity() {
             val fetched = account.pastRides()
             if (fetched != null) rides = fetched
             screen.value = if (fetched != null) Screen.Rides(fetched) else Screen.Failed
+            if (openLatest) {
+                openLatest = false
+                fetched?.firstOrNull()?.let { openRide(it) }
+            }
         }
     }
 
@@ -158,7 +195,47 @@ class PastRidesActivity : ComponentActivity() {
             val snapshot = withContext(Dispatchers.Default) {
                 RideTracker.summarize(power, athlete.resolve(karooFtp), ftp?.toDouble(), athlete.powerZones.map { it.max?.toDouble() })
             }
-            screen.value = Screen.Summary(ride, RideSummary.of(snapshot, ride.startedAt + ride.durationSeconds * 1000, athlete.powerZones.map { it.name }))
+            val summary = RideSummary.of(snapshot, ride.startedAt + ride.durationSeconds * 1000, athlete.powerZones.map { it.name })
+            screen.value = Screen.Summary(ride, summary, account.coach()?.commentFor(ride))
         }
     }
+
+    companion object {
+        const val EXTRA_OPEN_LATEST = "open_latest"
+    }
+}
+
+/** A badge for each best this ride set, shortest first. */
+@Composable
+private fun RecordBadges(records: List<RideRecord>) {
+    if (records.isEmpty()) return
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        records.forEach { record ->
+            Text(
+                "★ " + recordDuration(record.durationSeconds),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun recordDuration(seconds: Int): String =
+    if (seconds < 60) stringResource(R.string.duration_seconds, seconds) else stringResource(R.string.duration_minutes, seconds / 60)
+
+@Composable
+private fun RideComment(comment: CoachComment?) {
+    if (comment == null) {
+        Text(stringResource(R.string.ride_comment_none), style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    listOfNotNull(comment.title, comment.author).takeIf { it.isNotEmpty() }?.let {
+        Text(it.joinToString(" · "), style = MaterialTheme.typography.titleMedium)
+    }
+    Text(comment.text, style = MaterialTheme.typography.bodyMedium)
 }

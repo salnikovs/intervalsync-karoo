@@ -39,6 +39,7 @@ import icu.intervalsync.karoo.account.AccountState
 import icu.intervalsync.karoo.account.AccountStore
 import icu.intervalsync.karoo.account.TrainingContextSection
 import icu.intervalsync.karoo.account.TrendsSection
+import icu.intervalsync.karoo.account.BriefCard
 import icu.intervalsync.karoo.account.CoachCommentsSection
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.account.TodaySection
@@ -46,6 +47,7 @@ import icu.intervalsync.karoo.account.PlanSection
 import icu.intervalsync.karoo.account.SharedSpacesSection
 import icu.intervalsync.karoo.summary.PastRidesActivity
 import icu.intervalsync.karoo.summary.SummaryActivity
+import icu.intervalsync.karoo.summary.SummaryStore
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,6 +95,7 @@ class MainActivity : ComponentActivity() {
                                 if (accountState !is AccountState.Paired) {
                                     Text(stringResource(R.string.training_not_connected), style = MaterialTheme.typography.bodyMedium)
                                 }
+                                BriefCard(account)
                                 TrendsSection(account, settings)
                                 TrainingContextSection(account)
                                 SharedSpacesSection(account)
@@ -107,7 +110,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 OutlinedButton(
-                                    onClick = { startActivity(Intent(this@MainActivity, SummaryActivity::class.java)) },
+                                    onClick = { openLastRide(accountState is AccountState.Paired) },
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
                                     Text(stringResource(R.string.summary_open))
@@ -125,6 +128,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /** The last ride recorded here; without one, the newest ride fetched back from Intervals.icu. */
+    private fun openLastRide(paired: Boolean) {
+        val intent = if (SummaryStore(this).read() == null && paired) {
+            Intent(this, PastRidesActivity::class.java).putExtra(PastRidesActivity.EXTRA_OPEN_LATEST, true)
+        } else {
+            Intent(this, SummaryActivity::class.java)
+        }
+        startActivity(intent)
     }
 
     override fun onStart() {

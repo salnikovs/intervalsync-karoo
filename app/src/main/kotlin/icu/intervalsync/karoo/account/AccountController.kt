@@ -116,11 +116,15 @@ data class SharedSpace(
     val updates: List<SpaceUpdate>,
 )
 
-/** A note the assistant wrote after reviewing a ride or a week; [date] is yyyy-MM-dd. */
-data class CoachComment(val date: String, val week: Boolean, val title: String?, val text: String)
+/**
+ * A note after reviewing a ride or a week; [date] is yyyy-MM-dd. [author] is the coach's
+ * display name when a person wrote it, null when the assistant did. [rideId] is the past
+ * ride a ride comment is about, when the service knows it.
+ */
+data class CoachComment(val date: String, val week: Boolean, val title: String?, val text: String, val author: String? = null, val rideId: String? = null)
 
-/** What a day's workout is for, in the assistant's words; [date] is yyyy-MM-dd. */
-data class RideBrief(val date: String, val text: String)
+/** What a day's workout is for; [date] is yyyy-MM-dd, [author] as for [CoachComment]. */
+data class RideBrief(val date: String, val text: String, val author: String? = null)
 
 /** Caps the assistant set for one day's ride; [date] is yyyy-MM-dd. */
 data class RideTargets(val date: String, val powerMaxW: Int?, val hrMaxBpm: Int?, val note: String?)
@@ -130,6 +134,14 @@ data class Coach(val comments: List<CoachComment>, val brief: RideBrief?, val ta
     fun briefFor(date: String): RideBrief? = brief?.takeIf { it.date == date }
 
     fun targetsFor(date: String): RideTargets? = targets?.takeIf { it.date == date }
+
+    /** The ride comment about [ride]: the one naming it, else the only ride comment from its day. */
+    fun commentFor(ride: PastRide): CoachComment? {
+        val rideComments = comments.filter { !it.week }
+        rideComments.firstOrNull { it.rideId == ride.id }?.let { return it }
+        val day = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(ride.startedAt))
+        return rideComments.filter { it.rideId == null && it.date == day }.singleOrNull()
+    }
 
     companion object {
         /** Today in the Karoo's own timezone, as yyyy-MM-dd. */
@@ -162,7 +174,10 @@ data class TrendWeek(val weekStart: String, val hours: Double, val cpW: Double?,
 /** Weeks oldest first, ending with the current, partial week. */
 data class Trends(val weeks: List<TrendWeek>)
 
-data class PastRide(val id: String, val name: String, val startedAt: Long, val durationSeconds: Long)
+/** A best power this ride set for [durationSeconds], higher than any in the 90 days before it. */
+data class RideRecord(val durationSeconds: Int, val watts: Int)
+
+data class PastRide(val id: String, val name: String, val startedAt: Long, val durationSeconds: Long, val records: List<RideRecord> = emptyList())
 
 sealed interface AccountState {
     data object NotPaired : AccountState
@@ -353,12 +368,14 @@ class AccountController(
                 week = comment.string("scope") == "week",
                 title = comment.string("title")?.takeIf { it.isNotBlank() },
                 text = comment.string("text")?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null,
+                author = comment.string("author")?.trim()?.takeIf { it.isNotEmpty() },
+                rideId = comment.string("ride_id"),
             )
         }
         val brief = (json["brief"] as? JsonObject)?.let { brief ->
             val text = brief.string("text")?.trim()?.takeIf { it.isNotEmpty() }
             val date = brief.string("date")
-            if (text != null && date != null) RideBrief(date, text) else null
+            if (text != null && date != null) RideBrief(date, text, brief.string("author")?.trim()?.takeIf { it.isNotEmpty() }) else null
         }
         val targets = (json["targets"] as? JsonObject)?.let { targets ->
             RideTargets(
@@ -457,6 +474,13 @@ class AccountController(
                 name = ride.string("name").orEmpty(),
                 startedAt = ride.number("started_at_ms")?.toLong() ?: return@mapNotNull null,
                 durationSeconds = ride.number("duration_s")?.toLong() ?: 0,
+                records = (ride["records"] as? JsonArray).orEmpty().mapNotNull { element ->
+                    val record = element as? JsonObject ?: return@mapNotNull null
+                    RideRecord(
+                        durationSeconds = record.number("duration_s")?.roundToInt()?.takeIf { it > 0 } ?: return@mapNotNull null,
+                        watts = record.number("watts")?.roundToInt()?.takeIf { it > 0 } ?: return@mapNotNull null,
+                    )
+                }.sortedBy { it.durationSeconds },
             )
         }
     }

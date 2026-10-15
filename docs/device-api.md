@@ -83,10 +83,18 @@ The Karoo can't read rides already recorded on it, so it fetches them back from 
 ```json
 {
   "rides": [
-    {"id": "i123", "name": "Morning Ride", "started_at_ms": 1791500000000, "duration_s": 4244}
+    {
+      "id": "i123",
+      "name": "Morning Ride",
+      "started_at_ms": 1791500000000,
+      "duration_s": 4244,
+      "records": [{"duration_s": 5, "watts": 812}, {"duration_s": 1200, "watts": 268}]
+    }
   ]
 }
 ```
+
+`records` is optional: the durations among 5, 15 and 30 seconds and 5 and 20 minutes for which this ride's best power beat the rider's best in the 90 days before it, each with this ride's watts. The Karoo shows each as a badge. Omitted or empty when the ride set none, or when there aren't 90 days of history to compare with.
 
 ### `GET /api/device/rides/{id}/power`
 
@@ -197,7 +205,7 @@ The device calls this when the rider opens the app, at most once an hour.
 
 ## Coach
 
-Written by the rider's Intervalsync assistant, for the Karoo. Nothing here is read from or written to Intervals.icu: it is text and numbers saved on the Intervalsync account, like the training context.
+Written by the rider's Intervalsync assistant, or by their coach, for the Karoo. Nothing here is read from or written to Intervals.icu: it is text and numbers saved on the Intervalsync account, like the training context.
 
 ### `GET /api/device/coach`
 
@@ -206,16 +214,17 @@ Written by the rider's Intervalsync assistant, for the Karoo. Nothing here is re
 ```json
 {
   "comments": [
-    {"date": "2026-10-12", "scope": "ride", "title": "Z2 Endurance", "text": "..."},
-    {"date": "2026-10-11", "scope": "week", "text": "..."}
+    {"date": "2026-10-12", "scope": "ride", "ride_id": "i123", "title": "Z2 Endurance", "text": "..."},
+    {"date": "2026-10-11", "scope": "week", "author": "Dana", "text": "..."}
   ],
-  "brief": {"date": "2026-10-13", "text": "..."},
+  "brief": {"date": "2026-10-13", "text": "...", "author": "Dana"},
   "targets": {"date": "2026-10-13", "power_max_w": 190, "hr_max_bpm": 137, "note": "..."}
 }
 ```
 
-- `comments` — the assistant's notes after reviewing training, newest first, at most 10. `scope` is `ride` or `week`; `title` is optional.
-- `brief` — what the day's workout is for and what to watch. The Karoo shows it only on its `date`.
+- `comments` — notes after reviewing training, newest first, at most 10. `scope` is `ride` or `week`; `title` is optional. `ride_id` is optional: the `id` from `GET /api/device/rides` of the ride a `ride` comment is about. Without it the Karoo matches a ride comment to a past ride by date, and only when it is the one ride comment of that day.
+- `author` (on a comment or the brief) is optional: the display name of the coach who wrote it, when a person did. Omitted when the assistant wrote it.
+- `brief` — what the day's workout is for and what to watch, from the assistant or the rider's coach. The Karoo shows it only on its `date`, at the top of its Training tab (four lines until tapped) and on its Plan tab.
 - `targets` — caps for the day's ride; each of `power_max_w`, `hr_max_bpm` and `note` is optional. The Karoo applies them only on their `date`: it shows them, offers them as data fields, and warns the rider in-ride when the 10-second average goes over a cap.
 - `brief` and `targets` are `null` or omitted when the assistant hasn't set them.
 
