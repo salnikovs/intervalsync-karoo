@@ -25,6 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +50,10 @@ import io.hammerhead.karooext.KarooSystemService
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-/** Opened from the end-of-ride notification; shows the last finished ride and sends its report. */
+/**
+ * Opened from the end-of-ride notification; shows the last finished ride. Its report goes
+ * to Intervalsync on its own when the ride ends; a feel picked here is sent with it.
+ */
 class SummaryActivity : ComponentActivity() {
     private val karooSystem by lazy { KarooSystemService(this) }
     private val store by lazy { SummaryStore(this) }
@@ -62,6 +66,16 @@ class SummaryActivity : ComponentActivity() {
             var summary by remember { mutableStateOf(store.read()) }
             var sending by remember { mutableStateOf(false) }
             var failed by remember { mutableStateOf(false) }
+            val send = {
+                sending = true
+                failed = false
+                lifecycleScope.launch {
+                    failed = !RideReporter.sendPending(account, store)
+                    summary = store.read()
+                    sending = false
+                }
+            }
+            LaunchedEffect(Unit) { if (summary?.sent == false) send() }
             val accountState by account.state.collectAsState()
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -80,33 +94,26 @@ class SummaryActivity : ComponentActivity() {
                             SummaryContent(shown)
                             if (accountState is AccountState.Paired) {
                                 HorizontalDivider()
-                                FeelPicker(shown.feel, enabled = !shown.sent && !sending) { feel ->
-                                    summary = shown.copy(feel = feel).also { store.write(it) }
+                                FeelPicker(shown.feel, enabled = !sending) { feel ->
+                                    if (feel != shown.feel) {
+                                        summary = shown.copy(feel = feel, sent = false).also { store.write(it) }
+                                        send()
+                                    }
                                 }
-                                Button(
-                                    enabled = !shown.sent && !sending,
-                                    onClick = {
-                                        sending = true
-                                        failed = false
-                                        lifecycleScope.launch {
-                                            val saved = account.sendRideReport(shown.toReport())
-                                            if (saved) summary = shown.copy(sent = true).also { store.write(it) }
-                                            failed = !saved
-                                            sending = false
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text(
-                                        stringResource(
-                                            when {
-                                                shown.sent -> R.string.report_sent
-                                                sending -> R.string.report_sending
-                                                failed -> R.string.report_failed
-                                                else -> R.string.report_send
-                                            },
-                                        ),
-                                    )
+                                Text(
+                                    stringResource(
+                                        when {
+                                            shown.sent -> R.string.report_sent
+                                            sending -> R.string.report_sending
+                                            else -> R.string.report_waiting
+                                        },
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                                if (failed && !sending && !shown.sent) {
+                                    OutlinedButton(onClick = { send() }, modifier = Modifier.fillMaxWidth()) {
+                                        Text(stringResource(R.string.account_retry))
+                                    }
                                 }
                             }
                         }

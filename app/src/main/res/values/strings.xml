@@ -94,7 +94,7 @@
     <string name="alert_over_hr">Over today\'s heart rate cap</string>
     <string name="alert_cap_watts">Cap %1$d W</string>
     <string name="alert_cap_bpm">Cap %1$d bpm</string>
-    <string name="notification_send">Send ride to Intervalsync?</string>
+    <string name="notification_feel">Ride summary ready. How did it feel?</string>
 
     <string name="coach_title">Coach comments</string>
     <string name="space_coach">Coach space · %1$s</string>
@@ -115,10 +115,9 @@
     <string name="feel_3">Normal</string>
     <string name="feel_4">Poor</string>
     <string name="feel_5">Weak</string>
-    <string name="report_send">Send to Intervalsync</string>
     <string name="report_sending">Sending…</string>
     <string name="report_sent">Sent to Intervalsync</string>
-    <string name="report_failed">Couldn\'t send. Try again</string>
+    <string name="report_waiting">Not sent yet. It goes when the Karoo is online.</string>
 
     <string name="tab_training">Training</string>
     <string name="tab_plan">Plan</string>
