@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import icu.intervalsync.karoo.R
+import icu.intervalsync.karoo.core.CadenceTargets
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -69,6 +70,17 @@ private fun WorkoutRow(workout: PlannedWorkout) {
         )
         if (details.isNotEmpty()) {
             Text(details.joinToString(" · "), style = MaterialTheme.typography.bodyMedium)
+        }
+        // Karoo's own workout sync drops cadence targets, so they are spelled out here
+        val cadence = remember(workout.description) { CadenceTargets.from(workout.description) }
+        if (cadence.isNotEmpty()) {
+            Text(
+                stringResource(R.string.plan_cadence),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+            cadence.forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
         }
         workout.description?.let {
             // Tap to read a long description in full
