@@ -99,6 +99,29 @@ The Karoo can't read rides already recorded on it, so it fetches them back from 
 - `404` — not one of this rider's rides, or it has no power.
 - `413` — longer than 6 hours; the response would be too large for Karoo's HTTP channel.
 
+### `GET /api/device/rides/{id}/summary`
+
+`Authorization: Bearer <device token>`. The same ride summed up by the service, for a device whose channel can't take the samples: a Garmin Edge refuses a response past about an hour of them. Any length.
+
+```json
+{
+  "id": "i123",
+  "started_at_ms": 1791500000000,
+  "duration_s": 4244,
+  "average_power_w": 186.2,
+  "best_5min_w": 265.4,
+  "best_20min_w": 234.1,
+  "w_prime_min_j": -3100,
+  "w_prime_j": 21600
+}
+```
+
+The fields mean what they mean in the ride report. `average_power_w` counts every recorded second, 0 included. A best is omitted when the ride is shorter than its window. `w_prime_min_j` is the lowest W′ balance by Skiba's differential model with the CP and W′ of the rider's Ride settings in Intervals.icu, and both W′ fields are omitted when those settings have no CP or W′.
+
+- `404` — not one of this rider's rides, or it has no power.
+
+It counts as the same read as the ride's power.
+
 ## Training context
 
 ### `GET /api/device/context`
