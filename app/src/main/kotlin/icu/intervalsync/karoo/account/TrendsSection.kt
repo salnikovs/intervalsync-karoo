@@ -56,7 +56,6 @@ fun TrendsSection(account: AccountController, settings: SettingsStore) {
     val all = trends?.weeks?.takeIf { it.isNotEmpty() } ?: return
     val weeks = all.takeLast(span)
 
-    HorizontalDivider()
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (option in SPANS) {
             val select = {
@@ -78,6 +77,7 @@ fun TrendsSection(account: AccountController, settings: SettingsStore) {
     TrendLine(stringResource(R.string.trend_w_prime_title), weeks.map { it.wPrimeJ }) {
         stringResource(R.string.kilojoules, decimal(it / 1000))
     }
+    HorizontalDivider()
 }
 
 /** One bar per week of training hours; the last bar is the current week, still filling up. */
