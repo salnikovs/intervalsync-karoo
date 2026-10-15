@@ -34,6 +34,27 @@ private fun rememberCoach(account: AccountController): Coach? {
 }
 
 /**
+ * The coach and teams the rider belongs to, by name only, for the Settings tab. Their
+ * briefs and updates are on the Training tab. Nothing without any.
+ */
+@Composable
+fun MembershipsSection(account: AccountController) {
+    val state by account.state.collectAsState()
+    val spaces by produceState<List<SharedSpace>?>(initialValue = null, state) {
+        value = if (state is AccountState.Paired) account.sharedSpaces() else null
+    }
+    val shown = spaces?.takeIf { it.isNotEmpty() } ?: return
+    Text(stringResource(R.string.memberships_title), style = MaterialTheme.typography.titleMedium)
+    shown.sortedBy { !it.coach }.forEach { space ->
+        Text(
+            stringResource(if (space.coach) R.string.membership_coach else R.string.membership_team, space.name),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+    HorizontalDivider()
+}
+
+/**
  * The brief each coach or team space shares, and its latest updates. Always under the
  * space's own name, since these are other members' words rather than the rider's.
  */

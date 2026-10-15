@@ -72,6 +72,10 @@
     <string name="account_connected">Connected to Intervalsync</string>
     <string name="account_connected_as">Connected to Intervalsync as %1$s</string>
     <string name="account_sync">Sync now</string>
+    <string name="account_plan">Plan: %1$s</string>
+    <string name="memberships_title">Coach and teams</string>
+    <string name="membership_coach">Coach · %1$s</string>
+    <string name="membership_team">Team · %1$s</string>
     <string name="account_disconnect">Disconnect</string>
     <string name="settings_section">Settings</string>
     <string name="settings_from_intervals">From your Intervals.icu settings. Change them there, then tap Sync now.</string>
