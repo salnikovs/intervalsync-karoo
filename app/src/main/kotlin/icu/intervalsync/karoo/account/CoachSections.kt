@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import icu.intervalsync.karoo.R
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 private fun rememberCoach(account: AccountController): Coach? {
@@ -139,6 +141,37 @@ fun BriefCard(account: AccountController) {
         )
     }
     HorizontalDivider()
+}
+
+/**
+ * This morning's HRV, resting HR and sleep from Intervals.icu, as three numbers under the
+ * brief. Nothing until today's are in.
+ */
+@Composable
+fun WellnessRow(account: AccountController) {
+    val state by account.state.collectAsState()
+    val wellness by produceState<Wellness?>(initialValue = null, state) {
+        value = if (state is AccountState.Paired) account.wellness() else null
+    }
+    val today = wellness?.takeIf { it.date == Coach.today() && !it.isEmpty } ?: return
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        WellnessValue(stringResource(R.string.wellness_hrv), today.hrvMs?.let { stringResource(R.string.wellness_ms, it.roundToInt()) })
+        WellnessValue(stringResource(R.string.wellness_rhr), today.restingHr?.let { stringResource(R.string.wellness_bpm, it) })
+        WellnessValue(
+            stringResource(R.string.wellness_sleep),
+            today.sleepSeconds?.let { stringResource(R.string.wellness_sleep_value, it / 3600, it % 3600 / 60) },
+        )
+    }
+    today.source?.let { Text(stringResource(R.string.wellness_source, it), style = MaterialTheme.typography.bodySmall) }
+    HorizontalDivider()
+}
+
+@Composable
+private fun WellnessValue(label: String, value: String?) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text(value ?: stringResource(R.string.no_value), style = MaterialTheme.typography.titleLarge)
+    }
 }
 
 @Composable

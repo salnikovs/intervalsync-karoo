@@ -177,6 +177,23 @@ The device calls this when the rider opens the app, at most once every 6 hours.
 
 The device calls this when the rider opens the Plan tab, at most once an hour.
 
+## Wellness
+
+### `GET /api/device/wellness`
+
+`Authorization: Bearer <device token>`. Today's wellness record from the rider's Intervals.icu account, today being the athlete's own timezone.
+
+```json
+{"date": "2026-10-14", "hrv_ms": 62, "resting_hr": 44, "sleep_s": 26400, "source": "Garmin"}
+```
+
+- `date` — the day the record is for. The Karoo shows the values only when it is the Karoo's today.
+- `hrv_ms` (rMSSD, ms), `resting_hr` (bpm), `sleep_s` (seconds) — each optional, omitted when the record has none.
+- `source` — optional: where the values came from when Intervals.icu says (for example `Garmin`), so the Karoo can credit it. Intervals.icu's API terms ask an app showing Garmin-sourced data to credit Garmin.
+- `{"date": "..."}` alone when there is no record yet for today.
+
+The device calls this when the rider opens the app, at most once an hour. It shows the three under today's brief on its Training tab.
+
 ## Trends
 
 ### `GET /api/device/trends`

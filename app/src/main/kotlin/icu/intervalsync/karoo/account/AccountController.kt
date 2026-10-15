@@ -51,6 +51,14 @@ class AccountStore(context: Context) {
         get() = prefs.getString(KEY_TRENDS, null)
         set(value) = prefs.edit().putString(KEY_TRENDS, value).apply()
 
+    var wellnessJson: String?
+        get() = prefs.getString(KEY_WELLNESS, null)
+        set(value) = prefs.edit().putString(KEY_WELLNESS, value).apply()
+
+    var wellnessAt: Long
+        get() = prefs.getLong(KEY_WELLNESS_AT, 0)
+        set(value) = prefs.edit().putLong(KEY_WELLNESS_AT, value).apply()
+
     var contextJson: String?
         get() = prefs.getString(KEY_CONTEXT, null)
         set(value) = prefs.edit().putString(KEY_CONTEXT, value).apply()
@@ -95,6 +103,8 @@ class AccountStore(context: Context) {
         private const val KEY_PLAN = "plan"
         private const val KEY_SYNCED_AT = "synced_at"
         private const val KEY_TRENDS = "trends"
+        private const val KEY_WELLNESS = "wellness"
+        private const val KEY_WELLNESS_AT = "wellness_at"
         private const val KEY_CONTEXT = "context"
         private const val KEY_WORKOUTS = "workouts"
         private const val KEY_COACH = "coach"
@@ -176,6 +186,14 @@ data class TrainingContext(
 
 /** One week of training; [weekStart] is the Monday as yyyy-MM-dd. CP and W′ are null where they couldn't be modelled. */
 data class TrendWeek(val weekStart: String, val hours: Double, val cpW: Double?, val wPrimeJ: Double?)
+
+/**
+ * One day's wellness from Intervals.icu; [date] is yyyy-MM-dd. [source] names where the
+ * values came from (e.g. Garmin), shown with them when the service gives it.
+ */
+data class Wellness(val date: String, val hrvMs: Double?, val restingHr: Int?, val sleepSeconds: Long?, val source: String?) {
+    val isEmpty: Boolean get() = hrvMs == null && restingHr == null && sleepSeconds == null
+}
 
 /** Weeks oldest first, ending with the current, partial week. */
 data class Trends(val weeks: List<TrendWeek>)
@@ -444,6 +462,27 @@ class AccountController(
      * Twelve weeks of training hours, CP and W′. Served from the last fetch when that is
      * recent enough; null if nothing is cached and it couldn't be fetched.
      */
+    /** Today's HRV, resting HR and sleep; from the last fetch when it is recent enough. */
+    suspend fun wellness(): Wellness? {
+        val cached = account.wellnessJson?.let { parseWellness(it) }
+        if (cached != null && System.currentTimeMillis() - account.wellnessAt < WORKOUTS_STALE_MS) return cached
+        val json = get("/api/device/wellness") ?: return cached
+        account.wellnessJson = json.toString()
+        account.wellnessAt = System.currentTimeMillis()
+        return parseWellness(json.toString())
+    }
+
+    private fun parseWellness(stored: String): Wellness? {
+        val json = runCatching { Json.parseToJsonElement(stored) as? JsonObject }.getOrNull() ?: return null
+        return Wellness(
+            date = json.string("date") ?: return null,
+            hrvMs = json.number("hrv_ms")?.takeIf { it > 0 },
+            restingHr = json.number("resting_hr")?.roundToInt()?.takeIf { it > 0 },
+            sleepSeconds = json.number("sleep_s")?.toLong()?.takeIf { it > 0 },
+            source = json.string("source")?.trim()?.takeIf { it.isNotEmpty() },
+        )
+    }
+
     suspend fun trends(): Trends? {
         val cached = account.trendsJson?.let { parseTrends(it) }
         if (cached != null && System.currentTimeMillis() - account.trendsAt < TRENDS_STALE_MS) return cached

@@ -213,6 +213,8 @@ class Handler(BaseHTTPRequestHandler):
                 "brief": {"date": str(today), "text": "VO2 4x4 builds your ceiling. Hold 120% for each rep; if the third one fades by more than 10 W, stop after it."},
                 "targets": {"date": str(today), "power_max_w": 312, "hr_max_bpm": 172, "note": "Recoveries really easy."},
             })
+        elif self.path == "/api/device/wellness":
+            self.reply(200, {"date": str(datetime.date.today()), "hrv_ms": 62, "resting_hr": 44, "sleep_s": 26400, "source": "Garmin"})
         elif self.path == "/api/device/trends":
             today = datetime.date.today()
             monday = today - datetime.timedelta(days=today.weekday())

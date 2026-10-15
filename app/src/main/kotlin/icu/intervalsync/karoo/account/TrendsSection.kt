@@ -159,7 +159,6 @@ private fun TrendLine(title: String, values: List<Double?>, format: @Composable 
             started = true
             drawCircle(LineColor, radius = 2.dp.toPx(), center = last)
         }
-        drawLine(BaselineColor, Offset(0f, size.height - 1), Offset(size.width, size.height - 1), strokeWidth = 1.dp.toPx())
         drawPath(line, LineColor, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         drawCircle(LineColor, radius = 3.5.dp.toPx(), center = last)
     }
