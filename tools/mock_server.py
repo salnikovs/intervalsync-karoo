@@ -8,6 +8,10 @@ To approve a pairing by hand, as the website would:
 
     curl -X POST localhost:8787/api/devices -d '{"code": "483920"}'
 
+To make a code for a Garmin data field, as the website would:
+
+    curl -X POST localhost:8787/api/devices/codes
+
 Everything is in memory and there is no sign-in: never expose this beyond your own network.
 """
 
@@ -67,6 +71,8 @@ RIDES = {
 
 pairings = {}  # pairing_id -> {code, created, approved, polls}
 tokens = set()
+issued = {}  # code without dashes -> time made
+ISSUED_EXPIRES_IN = 1800
 auto_approve = 0
 
 
@@ -142,6 +148,22 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(401, {"error": "unauthorized"})
             print(f"  ride report: {json.dumps(body)}")
             self.reply(201, {"status": "saved"})
+        elif self.path == "/api/devices/codes":
+            # The portal making a code for a device that can't show one (a Garmin data field), approved as it is made.
+            code = "-".join("".join(secrets.choice("0123456789ABCDEFGHJKMNPQRSTVWXYZ") for _ in range(4)) for _ in range(3))
+            issued[code.replace("-", "")] = time.time()
+            print(f"  issued code {code}")
+            self.reply(201, {"code": code, "expires_in": ISSUED_EXPIRES_IN})
+        elif self.path == "/api/device/pairings/redeem":
+            code = str(body.get("code", "")).upper().replace("-", "").replace(" ", "").replace("O", "0").replace("I", "1").replace("L", "1")
+            made = issued.pop(code, None)
+            if made is None:
+                return self.reply(404, {"error": "unknown pairing"})
+            if time.time() - made > ISSUED_EXPIRES_IN:
+                return self.reply(410, {"error": "expired"})
+            token = secrets.token_urlsafe(32)
+            tokens.add(token)
+            self.reply(200, {"status": "approved", "token": token, "athlete_name": ATHLETE["athlete_name"]})
         elif self.path == "/api/devices":
             match = next((p for p in pairings.values() if p["code"] == str(body.get("code"))), None)
             if match is None:
