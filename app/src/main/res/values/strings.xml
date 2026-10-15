@@ -8,6 +8,10 @@
     <string name="wbal_kj_description">Work capacity left above critical power, in kJ</string>
     <string name="wbal_pct">W′ Balance %</string>
     <string name="wbal_pct_description">Work capacity left above critical power, as a share of W′</string>
+    <string name="best_5s">Best 5 s</string>
+    <string name="best_15s">Best 15 s</string>
+    <string name="best_30s">Best 30 s</string>
+    <string name="best_1min">Best 1 min</string>
     <string name="best_5min">Best 5 min</string>
     <string name="best_5min_description">Best 5-minute average power this ride</string>
     <string name="best_20min">Best 20 min</string>
