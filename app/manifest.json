@@ -3,10 +3,10 @@
   "packageName": "icu.intervalsync.karoo",
   "iconUrl": "https://github.com/salnikovs/intervalsync-karoo/releases/latest/download/intervalsync-karoo.png",
   "latestApkUrl": "https://github.com/salnikovs/intervalsync-karoo/releases/latest/download/intervalsync-karoo.apk",
-  "latestVersion": "0.1.6",
-  "latestVersionCode": 7,
+  "latestVersion": "0.1.7",
+  "latestVersionCode": 8,
   "developer": "Intervalsync",
   "description": "W′ balance and best-power data fields, an end-of-ride summary, and your Intervalsync account on the Karoo: training context, coach and team spaces, planned workouts, and today's brief and power and heart rate caps with in-ride alerts. Connecting needs an account at intervalsync.icu.",
-  "releaseNotes": "Settings tab: your Intervalsync plan under the connection, and the coach and teams you belong to. Today's brief now shows only on the Training tab.",
+  "releaseNotes": "Coach and team spaces move to the Settings tab, each opening on tap. Cleaner trend charts. Sync now in green and Disconnect in red.",
   "tags": ["performance"]
 }
