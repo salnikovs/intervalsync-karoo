@@ -1,5 +1,8 @@
 package icu.intervalsync.karoo.account
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -7,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import icu.intervalsync.karoo.R
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -76,7 +81,35 @@ private fun WorkoutRow(workout: PlannedWorkout) {
             )
         }
     }
+    OpenInWorkouts()
 }
+
+/**
+ * Opens Karoo's own Workouts list, where workouts planned on Intervals.icu arrive through
+ * Karoo's Intervals.icu connection and can be started. karoo-ext has no way to open one
+ * workout, so this lands on the list. Hidden on a Karoo without that screen.
+ */
+@Composable
+private fun OpenInWorkouts() {
+    val context = LocalContext.current
+    if (!context.canOpenWorkouts()) return
+    OutlinedButton(onClick = { context.openWorkouts() }, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.plan_open_workouts))
+    }
+}
+
+private fun Context.canOpenWorkouts(): Boolean = WorkoutsIntent.resolveActivity(packageManager) != null
+
+private fun Context.openWorkouts() {
+    try {
+        startActivity(Intent(WorkoutsIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (e: ActivityNotFoundException) {
+        Timber.w(e, "Karoo's Workouts screen isn't available")
+    }
+}
+
+/** Karoo's Workouts list; the action is the system's own, not part of karoo-ext. */
+private val WorkoutsIntent = Intent("io.hammerhead.intent.action.ADD_WORKOUT")
 
 @Composable
 private fun dayLabel(date: String): String {
