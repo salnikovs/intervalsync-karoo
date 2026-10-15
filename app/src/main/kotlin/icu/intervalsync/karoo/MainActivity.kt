@@ -98,7 +98,6 @@ class MainActivity : ComponentActivity() {
                                 }
                                 BriefCard(account)
                                 TrendsSection(account, settings)
-                                TrainingContextSection(account)
                                 SharedSpacesSection(account)
                                 CoachCommentsSection(account)
                                 HorizontalDivider()
@@ -122,6 +121,7 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 AccountSection(account)
                                 HorizontalDivider()
+                                TrainingContextSection(account)
                                 SettingsSection(settings, karooFtp)
                             }
                         }

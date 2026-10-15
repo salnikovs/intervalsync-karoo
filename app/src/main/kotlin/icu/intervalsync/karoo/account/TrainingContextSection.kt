@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +22,8 @@ import icu.intervalsync.karoo.R
 
 /**
  * The goal, events and other context the rider saved to their Intervalsync account,
- * in their own words. Shown only while connected, collapsed to its title until tapped.
+ * in their own words. On the Settings tab under the connection, shown only while connected,
+ * collapsed to its title until tapped.
  */
 @Composable
 fun TrainingContextSection(account: AccountController) {
@@ -57,4 +59,5 @@ fun TrainingContextSection(account: AccountController) {
             Text(text.orEmpty(), style = MaterialTheme.typography.bodyMedium)
         }
     }
+    HorizontalDivider()
 }
