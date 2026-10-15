@@ -36,10 +36,10 @@ class AccountStore(context: Context) {
         get() = prefs.getString(KEY_ATHLETE_NAME, null)
         set(value) = prefs.edit().putString(KEY_ATHLETE_NAME, value).apply()
 
-    /** The Intervalsync plan's name as the service gives it, e.g. "Pro"; null until it does. */
-    var plan: String?
-        get() = prefs.getString(KEY_PLAN, null)
-        set(value) = prefs.edit().putString(KEY_PLAN, value).apply()
+    /** The `billing` object from the last athlete sync, as received; null until the service sends one. */
+    var billingJson: String?
+        get() = prefs.getString(KEY_BILLING, null)
+        set(value) = prefs.edit().putString(KEY_BILLING, value).apply()
 
     /** Wall-clock millis of the last athlete sync, 0 if never. */
     var syncedAt: Long
@@ -100,7 +100,7 @@ class AccountStore(context: Context) {
     companion object {
         private const val KEY_TOKEN = "token"
         private const val KEY_ATHLETE_NAME = "athlete_name"
-        private const val KEY_PLAN = "plan"
+        private const val KEY_BILLING = "billing"
         private const val KEY_SYNCED_AT = "synced_at"
         private const val KEY_TRENDS = "trends"
         private const val KEY_WELLNESS = "wellness"
@@ -195,6 +195,22 @@ data class Wellness(val date: String, val hrvMs: Double?, val restingHr: Int?, v
     val isEmpty: Boolean get() = hrvMs == null && restingHr == null && sleepSeconds == null
 }
 
+/**
+ * The rider's Intervalsync plan and subscription, read-only on the Karoo; managed at
+ * intervalsync.icu. Dates are yyyy-MM-dd.
+ */
+data class Billing(val plan: String, val status: String?, val renewsOn: String?, val endsOn: String?)
+
+internal fun parseBilling(stored: String): Billing? {
+    val json = runCatching { Json.parseToJsonElement(stored) as? JsonObject }.getOrNull() ?: return null
+    return Billing(
+        plan = json.string("plan")?.trim()?.takeIf { it.isNotEmpty() } ?: return null,
+        status = json.string("status"),
+        renewsOn = json.string("renews_on"),
+        endsOn = json.string("ends_on"),
+    )
+}
+
 /** Weeks oldest first, ending with the current, partial week. */
 data class Trends(val weeks: List<TrendWeek>)
 
@@ -209,7 +225,7 @@ sealed interface AccountState {
     /** Waiting for the rider to enter [code] at [url]. */
     data class Pairing(val code: String, val url: String) : AccountState
 
-    data class Paired(val athleteName: String?, val plan: String? = null) : AccountState
+    data class Paired(val athleteName: String?, val billing: Billing? = null) : AccountState
 
     /** [status] is the HTTP status when the service refused to start a pairing. */
     data class Failed(val reason: Reason, val status: Int? = null) : AccountState {
@@ -231,7 +247,7 @@ class AccountController(
     private var pairingJob: Job? = null
 
     private fun current(): AccountState =
-        if (account.token != null) AccountState.Paired(account.athleteName, account.plan) else AccountState.NotPaired
+        if (account.token != null) AccountState.Paired(account.athleteName, account.billingJson?.let { parseBilling(it) }) else AccountState.NotPaired
 
     fun startPairing(scope: CoroutineScope) {
         pairingJob?.cancel()
@@ -307,7 +323,7 @@ class AccountController(
             hrZones = json["hr_zones"] as? JsonArray,
         )
         json.string("athlete_name")?.let { account.athleteName = it }
-        account.plan = json.string("plan")?.trim()?.takeIf { it.isNotEmpty() }
+        account.billingJson = (json["billing"] as? JsonObject)?.toString()
         account.syncedAt = System.currentTimeMillis()
         _state.value = current()
         return true

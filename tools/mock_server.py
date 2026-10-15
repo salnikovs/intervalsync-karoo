@@ -27,7 +27,7 @@ ATHLETE = {
     "weight_kg": 75.0,
     "max_hr": 185,
     "resting_hr": 50,
-    "plan": "Pro",
+    "billing": {"plan": "Pro", "status": "active", "renews_on": "2026-11-14"},
     "power_zones": [
         {"name": "Active Recovery", "max_w": 143},
         {"name": "Endurance", "max_w": 195},

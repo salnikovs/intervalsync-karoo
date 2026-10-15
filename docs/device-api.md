@@ -56,7 +56,7 @@ Session cookie and CSRF token. Body: `{"code": "483920"}`. Approves the pairing 
   "ftp_w": 248,
   "weight_kg": 81.8,
   "max_hr": 189,
-  "plan": "Pro",
+  "billing": {"plan": "Pro", "status": "active", "renews_on": "2026-11-14"},
   "resting_hr": 42,
   "power_zones": [
     {"name": "Active Recovery", "max_w": 136},
@@ -69,7 +69,7 @@ Session cookie and CSRF token. Body: `{"code": "483920"}`. Approves the pairing 
 }
 ```
 
-`plan` is the name of the rider's current Intervalsync plan as the website shows it (for example `Free`, `Pro`, or a trial); the Karoo shows it under the connection on its Settings tab.
+`billing` is the rider's Intervalsync plan and subscription, shown read-only under Billing and subscription at the bottom of the Karoo's Settings tab; nothing is bought or changed on the Karoo. `plan` is the plan's name as the website shows it (`Free`, `Pro`, a Coach plan, `Trial`). The rest is optional: `status` is `active`, `trialing`, `past_due` or `canceled`; `renews_on` is the next renewal of an active subscription; `ends_on` is when a trial ends, or when a canceled subscription stops. On Free, `plan` alone.
 
 `power_zones` and `hr_zones` are the rider's own zones from their Intervals.icu ride settings, lowest first, each with its name and upper bound; power bounds are in watts (the percentages of FTP already applied) and the open-ended top power zone has `max_w: null`. The Karoo shows them and has no settings of its own for CP, W′, FTP or zones: they are set up in Intervals.icu.
 
