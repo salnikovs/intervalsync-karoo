@@ -58,7 +58,8 @@ def synthetic_power(seconds, hard):
 
 
 RIDES = {
-    "m1": {"name": "Morning Ride", "started_at_ms": int((time.time() - 86400) * 1000), "watts": synthetic_power(5400, 290)},
+    "m1": {"name": "Morning Ride", "started_at_ms": int((time.time() - 86400) * 1000), "watts": synthetic_power(5400, 290),
+           "records": [{"duration_s": 5, "watts": 812}, {"duration_s": 300, "watts": 301}]},
     "m2": {"name": "Threshold 2x20", "started_at_ms": int((time.time() - 3 * 86400) * 1000), "watts": synthetic_power(3600, 245)},
     "m3": {"name": "Easy spin", "started_at_ms": int((time.time() - 5 * 86400) * 1000), "watts": [130] * 2700},
 }
@@ -180,9 +181,9 @@ class Handler(BaseHTTPRequestHandler):
             today = datetime.date.today()
             self.reply(200, {
                 "comments": [
-                    {"date": str(today - datetime.timedelta(days=1)), "scope": "ride", "title": "Z2 Endurance",
+                    {"date": str(today - datetime.timedelta(days=1)), "scope": "ride", "ride_id": "m1", "title": "Z2 Endurance",
                      "text": "Steady and controlled. Heart rate drifted 4% in the last 20 minutes, so keep fuelling from the start."},
-                    {"date": str(today - datetime.timedelta(days=2)), "scope": "week",
+                    {"date": str(today - datetime.timedelta(days=2)), "scope": "week", "author": "Dana",
                      "text": "Seven hours and both key sessions done. This week adds one VO2 day; keep everything else easy."},
                 ],
                 "brief": {"date": str(today), "text": "VO2 4x4 builds your ceiling. Hold 120% for each rep; if the third one fades by more than 10 W, stop after it."},
@@ -203,7 +204,7 @@ class Handler(BaseHTTPRequestHandler):
             ]
             self.reply(200, {"weeks": weeks})
         elif self.path == "/api/device/rides":
-            rides = [{"id": i, "name": r["name"], "started_at_ms": r["started_at_ms"], "duration_s": len(r["watts"])} for i, r in RIDES.items()]
+            rides = [{"id": i, "name": r["name"], "started_at_ms": r["started_at_ms"], "duration_s": len(r["watts"]), "records": r.get("records", [])} for i, r in RIDES.items()]
             self.reply(200, {"rides": rides})
         elif len(parts) == 6 and parts[3] == "rides" and parts[5] == "power" and parts[4] in RIDES:
             ride = RIDES[parts[4]]

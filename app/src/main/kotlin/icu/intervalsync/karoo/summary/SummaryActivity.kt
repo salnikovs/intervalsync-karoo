@@ -150,6 +150,9 @@ internal fun SummaryContent(summary: RideSummary) {
             " · " + stringResource(R.string.summary_duration, summary.recordedSeconds / 3600, summary.recordedSeconds % 3600 / 60),
         style = MaterialTheme.typography.bodyMedium,
     )
+    effort(summary)?.let { (zone, share) ->
+        Text(stringResource(R.string.summary_effort, zone, (share * 100).roundToInt()), style = MaterialTheme.typography.titleMedium)
+    }
     HorizontalDivider()
     Metric(stringResource(R.string.summary_average_power), summary.averagePowerW?.let { stringResource(R.string.watts, it.roundToInt()) })
     Metric(stringResource(R.string.best_5min), summary.best5MinW?.let { stringResource(R.string.watts, it.roundToInt()) })
@@ -171,8 +174,16 @@ internal fun SummaryContent(summary: RideSummary) {
     }
 }
 
+/** The zone most of the ride's stress came from, and its share. */
+private fun effort(summary: RideSummary): Pair<String, Double>? {
+    val zones = summary.zoneStress ?: return null
+    val total = zones.sumOf { it.second }.takeIf { it > 0 } ?: return null
+    val (name, stress) = zones.maxBy { it.second }
+    return name to stress / total
+}
+
 @Composable
-private fun Metric(label: String, value: String?) {
+internal fun Metric(label: String, value: String?) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodyLarge)
         Text(value ?: stringResource(R.string.no_value), style = MaterialTheme.typography.titleLarge)

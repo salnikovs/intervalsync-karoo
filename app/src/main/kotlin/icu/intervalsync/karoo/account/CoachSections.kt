@@ -1,15 +1,25 @@
 package icu.intervalsync.karoo.account
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import icu.intervalsync.karoo.R
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -81,7 +91,7 @@ fun CoachCommentsSection(account: AccountController) {
                 comment.week -> stringResource(R.string.coach_week, date)
                 comment.title != null -> "$date · ${comment.title}"
                 else -> date
-            },
+            } + (comment.author?.let { " · $it" } ?: ""),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -89,7 +99,37 @@ fun CoachCommentsSection(account: AccountController) {
     }
 }
 
-/** Today's brief and targets from the assistant, at the top of the Plan tab. Nothing on days without them. */
+/**
+ * Today's brief, whoever wrote it, at the top of the Training tab: four lines until
+ * tapped, then in full. Nothing on days without one.
+ */
+@Composable
+fun BriefCard(account: AccountController) {
+    val brief = rememberCoach(account)?.briefFor(Coach.today()) ?: return
+    var expanded by rememberSaveable { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(briefTitle(brief), style = MaterialTheme.typography.titleMedium)
+        Text(
+            brief.text,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = if (expanded) Int.MAX_VALUE else BRIEF_LINES,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+    HorizontalDivider()
+}
+
+@Composable
+private fun briefTitle(brief: RideBrief): String =
+    stringResource(R.string.brief_title) + (brief.author?.let { " · $it" } ?: "")
+
+private const val BRIEF_LINES = 4
+
+/** Today's brief and targets, at the top of the Plan tab. Nothing on days without them. */
 @Composable
 fun TodaySection(account: AccountController) {
     val coach = rememberCoach(account) ?: return
@@ -99,7 +139,7 @@ fun TodaySection(account: AccountController) {
     if (brief == null && targets == null) return
 
     if (brief != null) {
-        Text(stringResource(R.string.brief_title), style = MaterialTheme.typography.titleMedium)
+        Text(briefTitle(brief), style = MaterialTheme.typography.titleMedium)
         Text(brief.text, style = MaterialTheme.typography.bodyMedium)
     }
     if (targets != null) {
