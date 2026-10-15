@@ -22,7 +22,7 @@ The app has three tabs, all filled from the rider's Intervalsync account once th
 
 Today's targets are also available in-ride as Power Cap and HR Cap fields, with an alert when the 10-second average goes over a cap.
 
-When a ride with power ends, the app posts a notification that opens a summary: average power, best 5 and 20 min, the lowest W′ balance, and the split of training stress across the rider's own power zones. From there the rider can rate how it felt and send the report to Intervalsync for the assistant.
+When a ride with power ends, the app posts a notification that opens a summary: average power, best 5 and 20 min, the lowest W′ balance, and the split of training stress across the rider's own power zones. The ride report goes to Intervalsync for the assistant on its own as soon as the Karoo is online; rating how it felt on the summary sends it again with the rating.
 
 Past rides are fetched back from Intervals.icu through the service and summarized the same way, since the Karoo can't read rides already recorded on it.
 

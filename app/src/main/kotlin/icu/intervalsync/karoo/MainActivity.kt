@@ -46,6 +46,7 @@ import icu.intervalsync.karoo.account.TodaySection
 import icu.intervalsync.karoo.account.PlanSection
 import icu.intervalsync.karoo.account.SharedSpacesSection
 import icu.intervalsync.karoo.summary.PastRidesActivity
+import icu.intervalsync.karoo.summary.RideReporter
 import icu.intervalsync.karoo.summary.SummaryActivity
 import icu.intervalsync.karoo.summary.SummaryStore
 import io.hammerhead.karooext.KarooSystemService
@@ -147,6 +148,8 @@ class MainActivity : ComponentActivity() {
             karooFtp.value = profile.ftp.takeIf { it > 0 }
         }
         lifecycleScope.launch { account.syncIfStale() }
+        // A ride report that couldn't go when the ride ended
+        lifecycleScope.launch { RideReporter.sendPending(account, SummaryStore(this@MainActivity)) }
     }
 
     override fun onStop() {

@@ -10,6 +10,7 @@ import icu.intervalsync.karoo.account.Coach
 import icu.intervalsync.karoo.account.RideTargets
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.core.RideSnapshot
+import icu.intervalsync.karoo.summary.RideReporter
 import icu.intervalsync.karoo.summary.RideSummary
 import icu.intervalsync.karoo.summary.SummaryStore
 import io.hammerhead.karooext.KarooSystemService
@@ -20,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.math.roundToInt
@@ -51,6 +53,7 @@ class IntervalsyncExtension : KarooExtension("intervalsync", BuildConfig.VERSION
             Timber.i("Karoo system connected=$connected")
         }
         engine.start(scope)
+        scope.launch { sendRideReport() }
         scope.launch {
             account.syncIfStale()
             // So today's targets are on the Karoo before the ride starts
@@ -76,10 +79,11 @@ class IntervalsyncExtension : KarooExtension("intervalsync", BuildConfig.VERSION
 
     private fun onRideEnded(snapshot: RideSnapshot) {
         SummaryStore(this).write(RideSummary.of(snapshot, System.currentTimeMillis(), settings.read().powerZones.map { it.name }))
+        scope.launch { sendRideReport() }
         karooSystem.dispatch(
             SystemNotification(
                 id = "ride-summary",
-                message = getString(if (account.state.value is AccountState.Paired) R.string.notification_send else R.string.notification_summary),
+                message = getString(if (account.state.value is AccountState.Paired) R.string.notification_feel else R.string.notification_summary),
                 subText = snapshot.best5MinW?.let { getString(R.string.notification_summary_bests, it.roundToInt()) },
                 action = getString(R.string.notification_view),
                 actionIntent = "icu.intervalsync.karoo.SUMMARY",
@@ -87,9 +91,24 @@ class IntervalsyncExtension : KarooExtension("intervalsync", BuildConfig.VERSION
         )
     }
 
+    /** Sends the last ride's report, retrying while the Karoo is offline after the ride. */
+    private suspend fun sendRideReport() {
+        val store = SummaryStore(this)
+        repeat(REPORT_ATTEMPTS) { attempt ->
+            if (RideReporter.sendPending(account, store)) return
+            if (account.state.value !is AccountState.Paired) return
+            if (attempt < REPORT_ATTEMPTS - 1) delay(REPORT_RETRY_MS)
+        }
+    }
+
     override fun onDestroy() {
         scope.cancel()
         karooSystem.disconnect()
         super.onDestroy()
+    }
+
+    private companion object {
+        const val REPORT_ATTEMPTS = 12
+        const val REPORT_RETRY_MS = 5 * 60_000L
     }
 }

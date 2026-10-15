@@ -259,7 +259,7 @@ What only the Karoo knows about a finished ride, sent for the assistant to use. 
 
 ### `POST /api/device/rides`
 
-`Authorization: Bearer <device token>`. Sent when the rider taps Send on the ride summary.
+`Authorization: Bearer <device token>`. Sent on its own when a ride with power ends, and retried while the Karoo is offline: every 5 minutes for an hour, then whenever the app or the extension starts. Sent again, with `feel`, when the rider rates the ride on its summary.
 
 ```json
 {
