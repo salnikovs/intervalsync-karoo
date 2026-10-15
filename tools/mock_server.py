@@ -69,6 +69,29 @@ tokens = set()
 auto_approve = 0
 
 
+def summary(watts, cp, w_prime):
+    """What the service works out for GET /api/device/rides/{id}/summary."""
+    out = {"duration_s": len(watts)}
+    if not watts:
+        return out
+    out["average_power_w"] = round(sum(watts) / len(watts), 1)
+    for name, window in (("best_5min_w", 300), ("best_20min_w", 1200)):
+        if len(watts) >= window:
+            total = sum(watts[:window])
+            best = total
+            for i in range(window, len(watts)):
+                total += watts[i] - watts[i - window]
+                best = max(best, total)
+            out[name] = round(best / window, 1)
+    balance = lowest = w_prime
+    for p in watts:
+        balance = balance - (p - cp) if p > cp else w_prime - (w_prime - balance) * math.exp(-(cp - p) / w_prime)
+        lowest = min(lowest, balance)
+    out["w_prime_min_j"] = round(lowest)
+    out["w_prime_j"] = w_prime
+    return out
+
+
 class Handler(BaseHTTPRequestHandler):
     def reply(self, status, body=None):
         data = json.dumps(body).encode() if body is not None else b""
@@ -209,6 +232,9 @@ class Handler(BaseHTTPRequestHandler):
         elif len(parts) == 6 and parts[3] == "rides" and parts[5] == "power" and parts[4] in RIDES:
             ride = RIDES[parts[4]]
             self.reply(200, {"id": parts[4], "started_at_ms": ride["started_at_ms"], "watts": ride["watts"]})
+        elif len(parts) == 6 and parts[3] == "rides" and parts[5] == "summary" and parts[4] in RIDES:
+            ride = RIDES[parts[4]]
+            self.reply(200, {"id": parts[4], "started_at_ms": ride["started_at_ms"], **summary(ride["watts"], ATHLETE["cp_w"], ATHLETE["w_prime_j"])})
         else:
             self.reply(404, {"error": "not found"})
 
