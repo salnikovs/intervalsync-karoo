@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +21,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,7 +31,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import icu.intervalsync.karoo.account.AccountController
@@ -45,7 +47,6 @@ import icu.intervalsync.karoo.account.MembershipsSection
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.account.TodaySection
 import icu.intervalsync.karoo.account.PlanSection
-import icu.intervalsync.karoo.account.SharedSpacesSection
 import icu.intervalsync.karoo.summary.PastRidesActivity
 import icu.intervalsync.karoo.summary.RideReporter
 import icu.intervalsync.karoo.summary.SummaryActivity
@@ -99,7 +100,6 @@ class MainActivity : ComponentActivity() {
                                 }
                                 BriefCard(account)
                                 TrendsSection(account, settings)
-                                SharedSpacesSection(account)
                                 CoachCommentsSection(account)
                                 HorizontalDivider()
                                 if (accountState is AccountState.Paired) {
@@ -202,11 +202,19 @@ fun AccountSection(account: AccountController) {
             )
             current.plan?.let { Text(stringResource(R.string.account_plan, it), style = MaterialTheme.typography.bodyMedium) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { scope.launch { account.syncAthlete() } }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.account_sync), maxLines = 1)
+                OutlinedButton(
+                    onClick = { scope.launch { account.syncAthlete() } },
+                    modifier = Modifier.weight(1f),
+                    border = BorderStroke(1.dp, SyncColor),
+                ) {
+                    Text(stringResource(R.string.account_sync), color = SyncColor, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
-                TextButton(onClick = { scope.launch { account.unpair() } }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.account_disconnect), maxLines = 1)
+                OutlinedButton(
+                    onClick = { scope.launch { account.unpair() } },
+                    modifier = Modifier.weight(1f),
+                    border = BorderStroke(1.dp, DisconnectColor),
+                ) {
+                    Text(stringResource(R.string.account_disconnect), color = DisconnectColor, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
@@ -259,3 +267,7 @@ private fun ZoneList(title: String, zones: List<Zone>, rangeFormat: Int, aboveFo
 }
 
 private fun formatKj(joules: Int): String = (joules / 1000.0).toString().removeSuffix(".0")
+
+/** The app's light green, as in the trend charts. */
+private val SyncColor = Color(0xFFB8F04A)
+private val DisconnectColor = Color(0xFFFF6B5C)

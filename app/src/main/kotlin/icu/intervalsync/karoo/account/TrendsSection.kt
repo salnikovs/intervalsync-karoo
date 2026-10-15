@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -77,7 +76,6 @@ fun TrendsSection(account: AccountController, settings: SettingsStore) {
     TrendLine(stringResource(R.string.trend_w_prime_title), weeks.map { it.wPrimeJ }) {
         stringResource(R.string.kilojoules, decimal(it / 1000))
     }
-    HorizontalDivider()
 }
 
 /** One bar per week of training hours; the last bar is the current week, still filling up. */

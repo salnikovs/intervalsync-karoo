@@ -4,6 +4,7 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -34,8 +35,9 @@ private fun rememberCoach(account: AccountController): Coach? {
 }
 
 /**
- * The coach and teams the rider belongs to, by name only, for the Settings tab. Their
- * briefs and updates are on the Training tab. Nothing without any.
+ * The coach and teams the rider belongs to, on the Settings tab. Each is its name until
+ * tapped, then the brief its members share and its latest updates: other people's words,
+ * so always under the space's name. Nothing without any.
  */
 @Composable
 fun MembershipsSection(account: AccountController) {
@@ -45,45 +47,40 @@ fun MembershipsSection(account: AccountController) {
     }
     val shown = spaces?.takeIf { it.isNotEmpty() } ?: return
     Text(stringResource(R.string.memberships_title), style = MaterialTheme.typography.titleMedium)
-    shown.sortedBy { !it.coach }.forEach { space ->
-        Text(
-            stringResource(if (space.coach) R.string.membership_coach else R.string.membership_team, space.name),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
+    shown.sortedBy { !it.coach }.forEach { space -> SpaceRow(space) }
     HorizontalDivider()
 }
 
-/**
- * The brief each coach or team space shares, and its latest updates. Always under the
- * space's own name, since these are other members' words rather than the rider's.
- */
 @Composable
-fun SharedSpacesSection(account: AccountController) {
-    val state by account.state.collectAsState()
-    val spaces by produceState<List<SharedSpace>?>(initialValue = null, state) {
-        value = if (state is AccountState.Paired) account.sharedSpaces() else null
-    }
+private fun SpaceRow(space: SharedSpace) {
+    var expanded by rememberSaveable(space.name) { mutableStateOf(false) }
     val context = LocalContext.current
-    spaces.orEmpty().forEach { space ->
-        HorizontalDivider()
-        Text(stringResource(if (space.coach) R.string.space_coach else R.string.space_team, space.name), style = MaterialTheme.typography.titleMedium)
-        Labelled(R.string.context_goal, space.goal)
-        Labelled(R.string.space_focus, space.focus)
-        if (space.priorities.isNotEmpty()) {
-            Text(stringResource(R.string.space_priorities), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            space.priorities.forEach { Text(stringResource(R.string.space_bullet, it), style = MaterialTheme.typography.bodyMedium) }
-        }
-        Labelled(R.string.context_constraints, space.constraints)
-        if (space.updates.isNotEmpty()) {
-            Text(stringResource(R.string.space_updates), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            space.updates.forEach { update ->
-                val date = DayFormat.parse(update.date)?.let {
-                    DateUtils.formatDateTime(context, it.time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_NO_YEAR)
-                } ?: update.date
-                Text(listOf(update.author, date).filter { it.isNotEmpty() }.joinToString(" · "), style = MaterialTheme.typography.labelMedium)
-                Text(update.text, style = MaterialTheme.typography.bodyMedium)
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            stringResource(if (space.coach) R.string.membership_coach else R.string.membership_team, space.name),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(if (expanded) "▾" else "▸", style = MaterialTheme.typography.bodyLarge)
+    }
+    if (!expanded) return
+    Labelled(R.string.context_goal, space.goal)
+    Labelled(R.string.space_focus, space.focus)
+    if (space.priorities.isNotEmpty()) {
+        Text(stringResource(R.string.space_priorities), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        space.priorities.forEach { Text(stringResource(R.string.space_bullet, it), style = MaterialTheme.typography.bodyMedium) }
+    }
+    Labelled(R.string.context_constraints, space.constraints)
+    if (space.updates.isNotEmpty()) {
+        Text(stringResource(R.string.space_updates), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        space.updates.forEach { update ->
+            val date = DayFormat.parse(update.date)?.let {
+                DateUtils.formatDateTime(context, it.time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_NO_YEAR)
+            } ?: update.date
+            Text(listOf(update.author, date).filter { it.isNotEmpty() }.joinToString(" · "), style = MaterialTheme.typography.labelMedium)
+            Text(update.text, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
