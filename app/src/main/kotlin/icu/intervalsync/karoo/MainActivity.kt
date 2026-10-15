@@ -98,7 +98,6 @@ class MainActivity : ComponentActivity() {
                                 }
                                 BriefCard(account)
                                 TrendsSection(account, settings)
-                                TrainingContextSection(account)
                                 SharedSpacesSection(account)
                                 CoachCommentsSection(account)
                                 HorizontalDivider()
@@ -122,6 +121,7 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 AccountSection(account)
                                 HorizontalDivider()
+                                TrainingContextSection(account)
                                 SettingsSection(settings, karooFtp)
                             }
                         }
@@ -198,11 +198,13 @@ fun AccountSection(account: AccountController) {
                 current.athleteName?.let { stringResource(R.string.account_connected_as, it) } ?: stringResource(R.string.account_connected),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            OutlinedButton(onClick = { scope.launch { account.syncAthlete() } }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.account_sync))
-            }
-            TextButton(onClick = { scope.launch { account.unpair() } }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.account_disconnect))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { scope.launch { account.syncAthlete() } }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.account_sync), maxLines = 1)
+                }
+                TextButton(onClick = { scope.launch { account.unpair() } }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.account_disconnect), maxLines = 1)
+                }
             }
         }
     }
