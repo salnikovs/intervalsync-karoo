@@ -109,6 +109,13 @@
     <string name="space_bullet">• %1$s</string>
     <string name="coach_week">Week of %1$s</string>
     <string name="brief_title">Today\'s brief</string>
+    <string name="wellness_hrv">HRV</string>
+    <string name="wellness_rhr">Resting HR</string>
+    <string name="wellness_sleep">Sleep</string>
+    <string name="wellness_ms">%1$d ms</string>
+    <string name="wellness_bpm">%1$d bpm</string>
+    <string name="wellness_sleep_value">%1$d h %2$02d</string>
+    <string name="wellness_source">From %1$s via Intervals.icu</string>
     <string name="targets_title">Today\'s targets</string>
     <string name="targets_power">Power under %1$d W</string>
     <string name="targets_hr">Heart rate under %1$d bpm</string>

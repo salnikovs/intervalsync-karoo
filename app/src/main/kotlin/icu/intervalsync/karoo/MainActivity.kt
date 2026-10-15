@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,6 +45,7 @@ import icu.intervalsync.karoo.account.TrendsSection
 import icu.intervalsync.karoo.account.BriefCard
 import icu.intervalsync.karoo.account.CoachCommentsSection
 import icu.intervalsync.karoo.account.MembershipsSection
+import icu.intervalsync.karoo.account.WellnessRow
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.account.TodaySection
 import icu.intervalsync.karoo.account.PlanSection
@@ -99,6 +101,7 @@ class MainActivity : ComponentActivity() {
                                     Text(stringResource(R.string.training_not_connected), style = MaterialTheme.typography.bodyMedium)
                                 }
                                 BriefCard(account)
+                                WellnessRow(account)
                                 TrendsSection(account, settings)
                                 CoachCommentsSection(account)
                                 HorizontalDivider()
@@ -206,6 +209,7 @@ fun AccountSection(account: AccountController) {
                     onClick = { scope.launch { account.syncAthlete() } },
                     modifier = Modifier.weight(1f),
                     border = BorderStroke(1.dp, SyncColor),
+                    contentPadding = ButtonPadding,
                 ) {
                     Text(stringResource(R.string.account_sync), color = SyncColor, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
@@ -213,6 +217,7 @@ fun AccountSection(account: AccountController) {
                     onClick = { scope.launch { account.unpair() } },
                     modifier = Modifier.weight(1f),
                     border = BorderStroke(1.dp, DisconnectColor),
+                    contentPadding = ButtonPadding,
                 ) {
                     Text(stringResource(R.string.account_disconnect), color = DisconnectColor, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
@@ -271,3 +276,6 @@ private fun formatKj(joules: Int): String = (joules / 1000.0).toString().removeS
 /** The app's light green, as in the trend charts. */
 private val SyncColor = Color(0xFFB8F04A)
 private val DisconnectColor = Color(0xFFFF6B5C)
+
+/** Narrower than the default so both labels fit side by side on the Karoo's screen. */
+private val ButtonPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
