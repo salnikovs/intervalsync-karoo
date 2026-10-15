@@ -56,6 +56,7 @@ Session cookie and CSRF token. Body: `{"code": "483920"}`. Approves the pairing 
   "ftp_w": 248,
   "weight_kg": 81.8,
   "max_hr": 189,
+  "plan": "Pro",
   "resting_hr": 42,
   "power_zones": [
     {"name": "Active Recovery", "max_w": 136},
@@ -67,6 +68,8 @@ Session cookie and CSRF token. Body: `{"code": "483920"}`. Approves the pairing 
   ]
 }
 ```
+
+`plan` is the name of the rider's current Intervalsync plan as the website shows it (for example `Free`, `Pro`, or a trial); the Karoo shows it under the connection on its Settings tab.
 
 `power_zones` and `hr_zones` are the rider's own zones from their Intervals.icu ride settings, lowest first, each with its name and upper bound; power bounds are in watts (the percentages of FTP already applied) and the open-ended top power zone has `max_w: null`. The Karoo shows them and has no settings of its own for CP, W′, FTP or zones: they are set up in Intervals.icu.
 
@@ -247,7 +250,7 @@ Written by the rider's Intervalsync assistant, or by their coach, for the Karoo.
 
 - `comments` — notes after reviewing training, newest first, at most 10. `scope` is `ride` or `week`; `title` is optional. `ride_id` is optional: the `id` from `GET /api/device/rides` of the ride a `ride` comment is about. Without it the Karoo matches a ride comment to a past ride by date, and only when it is the one ride comment of that day.
 - `author` (on a comment or the brief) is optional: the display name of the coach who wrote it, when a person did. Omitted when the assistant wrote it.
-- `brief` — what the day's workout is for and what to watch, from the assistant or the rider's coach. The Karoo shows it only on its `date`, at the top of its Training tab (four lines until tapped) and on its Plan tab.
+- `brief` — what the day's workout is for and what to watch, from the assistant or the rider's coach. The Karoo shows it only on its `date`, at the top of its Training tab, four lines until tapped.
 - `targets` — caps for the day's ride; each of `power_max_w`, `hr_max_bpm` and `note` is optional. The Karoo applies them only on their `date`: it shows them, offers them as data fields, and warns the rider in-ride when the 10-second average goes over a cap.
 - `brief` and `targets` are `null` or omitted when the assistant hasn't set them.
 

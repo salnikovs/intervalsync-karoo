@@ -34,6 +34,27 @@ private fun rememberCoach(account: AccountController): Coach? {
 }
 
 /**
+ * The coach and teams the rider belongs to, by name only, for the Settings tab. Their
+ * briefs and updates are on the Training tab. Nothing without any.
+ */
+@Composable
+fun MembershipsSection(account: AccountController) {
+    val state by account.state.collectAsState()
+    val spaces by produceState<List<SharedSpace>?>(initialValue = null, state) {
+        value = if (state is AccountState.Paired) account.sharedSpaces() else null
+    }
+    val shown = spaces?.takeIf { it.isNotEmpty() } ?: return
+    Text(stringResource(R.string.memberships_title), style = MaterialTheme.typography.titleMedium)
+    shown.sortedBy { !it.coach }.forEach { space ->
+        Text(
+            stringResource(if (space.coach) R.string.membership_coach else R.string.membership_team, space.name),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+    HorizontalDivider()
+}
+
+/**
  * The brief each coach or team space shares, and its latest updates. Always under the
  * space's own name, since these are other members' words rather than the rider's.
  */
@@ -129,25 +150,16 @@ private fun briefTitle(brief: RideBrief): String =
 
 private const val BRIEF_LINES = 4
 
-/** Today's brief and targets, at the top of the Plan tab. Nothing on days without them. */
+/** Today's targets, at the top of the Plan tab; the brief is on the Training tab. Nothing on days without them. */
 @Composable
 fun TodaySection(account: AccountController) {
-    val coach = rememberCoach(account) ?: return
-    val today = Coach.today()
-    val brief = coach.briefFor(today)
-    val targets = coach.targetsFor(today)?.takeIf { it.powerMaxW != null || it.hrMaxBpm != null || it.note != null }
-    if (brief == null && targets == null) return
+    val targets = rememberCoach(account)?.targetsFor(Coach.today())
+        ?.takeIf { it.powerMaxW != null || it.hrMaxBpm != null || it.note != null } ?: return
 
-    if (brief != null) {
-        Text(briefTitle(brief), style = MaterialTheme.typography.titleMedium)
-        Text(brief.text, style = MaterialTheme.typography.bodyMedium)
-    }
-    if (targets != null) {
-        Text(stringResource(R.string.targets_title), style = MaterialTheme.typography.titleMedium)
-        targets.powerMaxW?.let { Text(stringResource(R.string.targets_power, it), style = MaterialTheme.typography.bodyLarge) }
-        targets.hrMaxBpm?.let { Text(stringResource(R.string.targets_hr, it), style = MaterialTheme.typography.bodyLarge) }
-        targets.note?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-    }
+    Text(stringResource(R.string.targets_title), style = MaterialTheme.typography.titleMedium)
+    targets.powerMaxW?.let { Text(stringResource(R.string.targets_power, it), style = MaterialTheme.typography.bodyLarge) }
+    targets.hrMaxBpm?.let { Text(stringResource(R.string.targets_hr, it), style = MaterialTheme.typography.bodyLarge) }
+    targets.note?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
     HorizontalDivider()
 }
 

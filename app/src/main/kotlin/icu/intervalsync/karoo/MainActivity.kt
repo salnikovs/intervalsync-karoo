@@ -41,6 +41,7 @@ import icu.intervalsync.karoo.account.TrainingContextSection
 import icu.intervalsync.karoo.account.TrendsSection
 import icu.intervalsync.karoo.account.BriefCard
 import icu.intervalsync.karoo.account.CoachCommentsSection
+import icu.intervalsync.karoo.account.MembershipsSection
 import icu.intervalsync.karoo.account.IntervalsyncApi
 import icu.intervalsync.karoo.account.TodaySection
 import icu.intervalsync.karoo.account.PlanSection
@@ -122,6 +123,7 @@ class MainActivity : ComponentActivity() {
                                 AccountSection(account)
                                 HorizontalDivider()
                                 TrainingContextSection(account)
+                                MembershipsSection(account)
                                 SettingsSection(settings, karooFtp)
                             }
                         }
@@ -198,6 +200,7 @@ fun AccountSection(account: AccountController) {
                 current.athleteName?.let { stringResource(R.string.account_connected_as, it) } ?: stringResource(R.string.account_connected),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            current.plan?.let { Text(stringResource(R.string.account_plan, it), style = MaterialTheme.typography.bodyMedium) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { scope.launch { account.syncAthlete() } }, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.account_sync), maxLines = 1)
