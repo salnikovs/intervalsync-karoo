@@ -36,6 +36,28 @@ No auth. Body: `{"pairing_id": "..."}`. The device polls this every `interval` s
 
 Session cookie and CSRF token. Body: `{"code": "483920"}`. Approves the pairing for the signed-in rider. Attempts are limited per account.
 
+### Codes made by the website
+
+A device that can't poll for a code it shows, a Garmin data field (it reaches the service only from a background task that runs at most every 5 minutes), is paired the other way: the website makes the code and the device redeems it.
+
+#### `POST /api/devices/codes` (website, signed in)
+
+Session cookie and CSRF token. Empty body. Makes a code already approved for the signed-in rider's account and connection. Limited per account per day, and refused without a training connection or with the account's device limit reached.
+
+`201 {"code": "7K3M-Q9TD-2XHR", "expires_in": 1800}`
+
+The code is 12 characters of Crockford's base 32, shown in groups of four. It lasts 30 minutes and works once.
+
+#### `POST /api/device/pairings/redeem`
+
+No auth. Body: `{"code": "7K3M-Q9TD-2XHR"}`. Case, spaces and dashes are ignored, O reads as 0, I and L as 1.
+
+- `200 {"status": "approved", "token": "...", "athlete_name": "..."}` — as the token poll's approval; the code is then spent.
+- `404` — unknown or already used; `410` — expired.
+- `429` with `Retry-After` — too many tries from this address.
+
+The device is listed on the website as "Garmin data field".
+
 ### `DELETE /api/device`
 
 `Authorization: Bearer <device token>`. Revokes the token. `204`.
