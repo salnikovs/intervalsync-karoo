@@ -143,5 +143,6 @@
     <string name="plan_tomorrow">Tomorrow</string>
     <string name="plan_load">load %1$d</string>
     <string name="plan_open_workouts">Open in Workouts</string>
+    <string name="plan_cadence">Cadence targets (not shown in Karoo\'s Workouts)</string>
     <string name="training_not_connected">Connect to Intervalsync on the Settings tab to see your consistency, trends and past rides here.</string>
 </resources>
