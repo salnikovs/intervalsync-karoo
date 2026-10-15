@@ -93,10 +93,10 @@ class MainActivity : ComponentActivity() {
                                 if (accountState !is AccountState.Paired) {
                                     Text(stringResource(R.string.training_not_connected), style = MaterialTheme.typography.bodyMedium)
                                 }
+                                TrendsSection(account, settings)
                                 TrainingContextSection(account)
                                 SharedSpacesSection(account)
                                 CoachCommentsSection(account)
-                                TrendsSection(account, settings)
                                 HorizontalDivider()
                                 if (accountState is AccountState.Paired) {
                                     Button(
